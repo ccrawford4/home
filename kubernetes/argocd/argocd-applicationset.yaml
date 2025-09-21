@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: argocd-appset
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/ccrawford4/home.git
+        revision: HEAD
+        directories:
+          - path: "helm/*"
+  template:
+    metadata:
+      name: "{{path.basename}}-{{name}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/ccrawford4/home.git
+        targetRevision: HEAD
+        path: "{{path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path.basename}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
