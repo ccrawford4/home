@@ -12,7 +12,7 @@ spec:
           - path: "helm/*"
   template:
     metadata:
-      name: "{{path.basename}}-{{name}}"
+      name: "{{path.basename}}"
     spec:
       project: default
       source:
