@@ -1,4 +1,7 @@
 application-template:
+  namespace: hello-world
+  createNamespace: true
+
   service:
     type: ClusterIP
     port: 80

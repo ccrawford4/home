@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "application-template.fullname" . }}
-  labels:
-    {{- include "application-template.labels" . | nindent 4 }}
+  labels: {{- include "application-template.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
 spec:
   type: {{ .Values.service.type }}
   ports:

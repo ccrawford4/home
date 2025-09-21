@@ -6,6 +6,7 @@ metadata:
     {{- include "application-template.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
+  namespace: {{ .Values.namespace }}
 spec:
   containers:
     - name: wget
