@@ -11,7 +11,7 @@ application-template:
     name: ""
   replicaCount: 1
   image:
-    repository: strm/helloworld-http
+    repository: nginxdemos/hello
     pullPolicy: IfNotPresent
     tag: "latest"
     port: 80
