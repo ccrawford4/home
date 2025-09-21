@@ -27425,7 +27425,6 @@ spec:
           name: argocd-cmd-params-cm
           optional: true
         name: argocd-cmd-params-cm
-  namespace: argocd
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -27783,7 +27782,6 @@ spec:
           name: argocd-cmd-params-cm
           optional: true
         name: argocd-cmd-params-cm
-  namespace: argocd
 ---
 apiVersion: apps/v1
 kind: StatefulSet
