@@ -24913,6 +24913,7 @@ metadata:
 apiVersion: v1
 data:
   redis.server: argocd-redis-ha-haproxy:6379
+  server.insecure: "true"
 kind: ConfigMap
 metadata:
   labels:
@@ -27051,7 +27052,6 @@ spec:
       containers:
       - args:
         - /usr/local/bin/argocd-server
-        - --insecure
         env:
         - name: ARGOCD_API_SERVER_REPLICAS
           value: "2"
