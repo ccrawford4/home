@@ -7,9 +7,13 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.priority: "42"
 spec:
+  tls:
+    - hosts:
+        - calum.run
+        - argocd.calum.run
+      secretName: tls-secret
   rules:
     - host: calum.run
-      secretName: tls-secret
       http:
         paths:
           - path: /
@@ -20,7 +24,6 @@ spec:
                 port:
                   number: 80
     - host: argocd.calum.run
-      secretName: tls-secret
       http:
         paths:
           - path: /
