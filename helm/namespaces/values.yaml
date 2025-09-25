@@ -1,3 +1,4 @@
 namespaces:
   - name: argocd
   - name: apps
+  - name: networking
