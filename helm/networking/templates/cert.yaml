@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: networking
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: selfsigned-cert
+  namespace: networking
+spec:
+  dnsNames:
+    - calum.run
+  secretName: selfsigned-cert-tls
+  issuerRef:
+    name: selfsigned-issuer
