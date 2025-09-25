@@ -1,20 +1,31 @@
 apiVersion: cert-manager.io/v1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
-  name: selfsigned-issuer
+  name: letsencrypt-prod
   namespace: networking
 spec:
-  selfSigned: {}
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: calumcrawford9@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: traefik
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: selfsigned-cert
+  name: tls-cert
   namespace: networking
 spec:
+  secretName: tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: calum.run
   dnsNames:
     - calum.run
-  secretName: selfsigned-cert-tls
-  issuerRef:
-    name: selfsigned-issuer
-    kind: Issuer
+    - www.calum.run
+    - argocd.calum.run
