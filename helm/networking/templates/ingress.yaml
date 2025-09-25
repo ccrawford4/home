@@ -17,7 +17,6 @@ spec:
             backend:
               service:
                 name: hello-world
-                namespace: apps
                 port:
                   number: 80
   # tls:
