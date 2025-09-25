@@ -4,11 +4,12 @@ metadata:
   namespace: apps
   name: apps-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.priority: "42"
 spec:
   rules:
     - host: calum.run
+      secretName: tls-secret
       http:
         paths:
           - path: /
@@ -19,6 +20,7 @@ spec:
                 port:
                   number: 80
     - host: argocd.calum.run
+      secretName: tls-secret
       http:
         paths:
           - path: /
