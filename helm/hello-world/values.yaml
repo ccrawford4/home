@@ -1,6 +1,5 @@
 application-template:
-  namespace: hello-world
-  createNamespace: true
+  name: hello-world
   service:
     type: ClusterIP
     port: 80

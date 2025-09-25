@@ -1,0 +1,11 @@
+{{- range .Values.namespaces }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .name }}
+  {{- if .labels }}
+  labels:
+    {{- toYaml .labels | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,3 @@
+namespaces:
+  - name: argocd
+  - name: apps
