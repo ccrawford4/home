@@ -2,4 +2,3 @@ namespaces:
   - name: argocd
   - name: apps
   - name: networking
-  - name: cert-manager

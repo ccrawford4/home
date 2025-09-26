@@ -1,1 +1,17 @@
-
+namespaces:
+  apps:
+    rules:
+      - host: calum.run
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: hello-world
+            servicePort: 80
+  argocd:
+    rules:
+      - host: argocd.calum.run
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: argocd-server
+            servicePort: 80
