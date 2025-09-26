@@ -27,3 +27,8 @@ cd home
 ./install.sh
 ```
 
+4. Then add the applicationset
+
+```bash
+kubectl apply -f argocd-applicationset.yaml
+```
