@@ -32,3 +32,6 @@ cd home
 ```bash
 kubectl apply -f argocd-applicationset.yaml
 ```
+
+5. Add a tunnel (I'm using cloudflare) so you can access it from outside your network
+
