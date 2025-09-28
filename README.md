@@ -35,3 +35,8 @@ kubectl apply -f argocd-applicationset.yaml
 
 5. Add a tunnel (I'm using cloudflare) so you can access it from outside your network
 
+
+## TODO
+
+- Need to configure kube-apiserver so that it supports ServiceAccount token volume projections.
+https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#serviceaccount-token-volume-projection
