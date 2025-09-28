@@ -49,3 +49,4 @@ application-template:
       targetName: hello-world-secret-one
       secretsKey: hello-world-test-key
       remoteRefKey: projects/631401797177/secrets/test-secret-1/versions/latest
+      googleServiceAccount: hello-world
