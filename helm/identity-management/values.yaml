@@ -1,0 +1,12 @@
+# Define all the kubernetes service accounts to be created
+serviceAccounts:
+  - name: hello-world-sa
+    namespace: hello-world
+    googleServiceAccount: hello-world
+
+# Define all secret stores to be created for external secret management systems
+# Reference: https://external-secrets.io/v0.10.0/guides/
+secretStores:
+  - name: hello-world-secret-store
+    namespace: hello-world
+    serviceAccountName: hello-world-sa

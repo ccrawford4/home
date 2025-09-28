@@ -3,3 +3,4 @@ namespaces:
   - name: apps
   - name: networking
   - name: external-secrets
+  - name: hello-world
