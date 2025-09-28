@@ -15,3 +15,12 @@ namespaces:
             pathType: Prefix
             serviceName: argocd-server
             servicePort: 80
+
+  openid-api:
+    rules:
+      - host: openid.calum.run
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: openid-api
+            servicePort: 80
