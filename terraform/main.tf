@@ -1,8 +1,3 @@
-# Create the workload identity pool
-resource "google_iam_workload_identity_pool" "home_cluster_pool" {
-  workload_identity_pool_id = "home-cluster-pool"
-}
-
 module "hello-world-secrets" {
    source = "./modules/secrets_core"
    project_id = var.project_id

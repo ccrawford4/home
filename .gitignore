@@ -1,6 +1,7 @@
 secrets.auto.tfvars
 .terraform
 *.out
-terraform.lock.hcl
+.terraform.lock.hcl
 terraform.tfstate.backup
 terraform.tfstate
+*.json
