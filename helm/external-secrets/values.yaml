@@ -127,7 +127,9 @@ serviceAccount:
   # -- Automounts the service account token in all containers of the pod
   automount: true
   # -- Annotations to add to the service account.
-  annotations: {}
+  annotations: {
+    iam.gke.io/gcp-service-account: hello-world@home-473419.iam.gserviceaccount.com
+  }
   # -- Extra Labels to add to the service account.
   extraLabels: {}
   # -- The name of the service account to use.
