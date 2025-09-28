@@ -48,4 +48,4 @@ application-template:
       secretStoreName: hello-world-secret-store
       targetName: hello-world-secret-one
       secretsKey: hello-world-test-key
-      remoteKeyRef: projects/631401797177/secrets/test-secret-1/versions/latest
+      remoteRefKey: projects/631401797177/secrets/test-secret-1/versions/latest
