@@ -4,3 +4,4 @@ namespaces:
   - name: networking
   - name: external-secrets
   - name: hello-world
+  - name: openid-api
