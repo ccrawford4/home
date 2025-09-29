@@ -38,5 +38,4 @@ kubectl apply -f argocd-applicationset.yaml
 
 ## TODO
 
-- Need to configure kube-apiserver so that it supports ServiceAccount token volume projections.
-https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#serviceaccount-token-volume-projection
+- The External-Secrets operator workload idenity requires GKE. Use GCP JSON secrets instead
