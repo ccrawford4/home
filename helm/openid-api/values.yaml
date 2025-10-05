@@ -1,6 +1,6 @@
 application-template:
   name: openid-api
-  namespace: openid-api
+  namespace: hello-world
   service:
     type: ClusterIP
     port: 80
