@@ -2,12 +2,23 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	fmt.Printf("Starting OIDC Connect API Server...\n")
+
+	testKey := os.Getenv("TEST_KEY")
+
+	if testKey == "" {
+		log.Fatalf("TEST_KEY environment variable is not set. Exiting...\n")
+		return
+	}
+
+	fmt.Printf("TEST_KEY: %s\n", testKey)
 
 	r := gin.Default()
 
