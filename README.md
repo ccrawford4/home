@@ -36,6 +36,46 @@ kubectl apply -f argocd-applicationset.yaml
 5. Add a tunnel (I'm using cloudflare) so you can access it from outside your network
 
 
-## TODO
+## Generating Secrets
 
-- The External-Secrets operator workload idenity requires GKE. Use GCP JSON secrets instead
+### Create the kubernetes secret to authenticate with Google Cloud
+
+#### Using the automated script (recommended)
+
+1. Run the script with your GCP project ID and SSH hostname:
+```bash
+./apply-gcp-secret.sh <project-id> <hostname>
+```
+Example:
+```bash
+./apply-gcp-secret.sh home-473419 pi@192.168.1.100
+```
+
+2. SSH into your host to verify the secret was created, and then apply it to the cluster:
+```bash
+ssh <hostname>
+kubectl apply -f gcp-sa-secret.yaml
+```
+
+This will:
+1. Create the service account key
+2. Generate the `gcp-sa-secret.yaml` with the credentials
+3. Copy it to the remote host
+
+#### Manual steps
+
+If you prefer to do it manually:
+
+1. Create the service account key
+```bash
+gcloud iam service-accounts keys create credentials \
+    --iam-account=secrets-manager-sa@<project-id>.iam.gserviceaccount.com
+```
+
+2. Update `gcp-sa-secret.yaml` with the contents of the credentials file
+
+3. Copy the secret to your cluster and apply it
+```bash
+scp gcp-sa-secret.yaml <hostname>:~/gcp-sa-secret.yaml
+ssh <hostname> "kubectl apply -f gcp-sa-secret.yaml"
+```
