@@ -5,3 +5,4 @@ secrets.auto.tfvars
 terraform.tfstate.backup
 terraform.tfstate
 *.json
+.credentials
