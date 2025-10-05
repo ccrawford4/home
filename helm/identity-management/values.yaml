@@ -9,4 +9,5 @@ serviceAccounts:
 secretStores:
   - name: hello-world-secret-store
     namespace: hello-world
-    serviceAccountName: hello-world-sa
+    secretName: gcp-sa-secret
+    secretKey: secret-access-credentials
