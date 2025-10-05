@@ -16,6 +16,13 @@ application-template:
     pullPolicy: IfNotPresent
     tag: "latest"
     port: 80
+  container:
+    environment:
+      - name: TEST_KEY_2
+        valueFrom:
+          secretKeyRef:
+            name: hello-world-cluster-secret-one
+            key: hello-world-cluster-test-key
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""

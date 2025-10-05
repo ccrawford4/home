@@ -38,7 +38,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            {{- with .Values.container.environment }}
+            {{- with $.Values.container.environment }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           ports:
