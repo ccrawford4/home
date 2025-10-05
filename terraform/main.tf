@@ -13,4 +13,3 @@ module "hello-world-secrets" {
    google_service_account_id = "hello-world"
    workload_identity_pool_id = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
-

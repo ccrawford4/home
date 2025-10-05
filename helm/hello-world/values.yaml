@@ -1,6 +1,7 @@
 application-template:
   name: hello-world
   namespace: hello-world
+  clusterSecretStoreName: cluster-secret-store
   service:
     type: ClusterIP
     port: 80
@@ -49,3 +50,8 @@ application-template:
       targetName: hello-world-secret-one
       secretsKey: hello-world-test-key
       remoteRefKey: test-secret-1
+  clusterSecrets:
+    - name: hello-world-cluster-secret-one
+      targetName: hello-world-cluster-secret-one
+      secretsKey: hello-world-cluster-test-key
+      remoteRefKey: test-secret-2
