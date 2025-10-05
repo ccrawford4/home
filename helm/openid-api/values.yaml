@@ -13,7 +13,7 @@ application-template:
   image:
     repository: ccrawford4/openid-api
     pullPolicy: IfNotPresent
-    tag: "latest"
+    tag: "0.0.1"
     port: 8080
   container:
     environment:
