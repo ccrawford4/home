@@ -18,5 +18,7 @@ resource "google_secret_manager_secret_iam_binding" "k8s_sa_secret_binding_test_
   project = var.project_id
   secret_id = google_secret_manager_secret.test_secret_two.secret_id
   role = "roles/secretmanager.secretAccessor"
-  members = [ google_service_account.secrets_manager_service_account.member ]
+  members = [ 
+    "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id}/subject/ns/hello-world/sa/hello-world",
+    google_service_account.secrets_manager_service_account.member ]
 }
