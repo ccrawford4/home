@@ -5,7 +5,7 @@ namespaces:
         paths:
           - path: /
             pathType: Prefix
-            serviceName: hello-world
+            serviceName: search-app
             servicePort: 80
   argocd:
     rules:
@@ -14,13 +14,4 @@ namespaces:
           - path: /
             pathType: Prefix
             serviceName: argocd-server
-            servicePort: 80
-
-  openid-api:
-    rules:
-      - host: openid.calum.run
-        paths:
-          - path: /
-            pathType: Prefix
-            serviceName: openid-api
             servicePort: 80

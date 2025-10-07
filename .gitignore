@@ -6,3 +6,5 @@ terraform.tfstate.backup
 terraform.tfstate
 *.json
 .credentials
+Chart.lock
+charts/

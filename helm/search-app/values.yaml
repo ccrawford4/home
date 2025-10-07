@@ -1,0 +1,30 @@
+application-template:
+  name: search-app
+  namespace: search-app
+  clusterSecretStoreName: cluster-secret-store
+  service:
+    type: ClusterIP
+    port: 80
+  replicaCount: 1
+  image:
+    repository: ccrawford4/search-app-frontend
+    pullPolicy: IfNotPresent
+    tag: "latest"
+    port: 80
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+  serviceAccount:
+    create: true
+    name: search-app
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
