@@ -1,7 +1,7 @@
 namespaces:
-  apps:
+  search-app:
     rules:
-      - host: calum.run
+      - host: search.calum.run
         paths:
           - path: /
             pathType: Prefix
