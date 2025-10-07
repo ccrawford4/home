@@ -128,7 +128,8 @@ serviceAccount:
   automount: true
   # -- Annotations to add to the service account.
   annotations: {
-    iam.gke.io/gcp-service-account: hello-world@home-473419.iam.gserviceaccount.com
+    # TODO:replace <home-473419> 
+    iam.gke.io/gcp-service-account: secrets-manager-sa@home-473419.iam.gserviceaccount.com
   }
   # -- Extra Labels to add to the service account.
   extraLabels: {}
