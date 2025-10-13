@@ -1,7 +1,6 @@
 application-template:
   namespace: search-app
   clusterSecretStoreName: cluster-secret-store
-
   deployments:
     frontend:
       name: search-app-frontend
@@ -34,7 +33,6 @@ application-template:
       environment:
         - name: API_ENDPOINT
           value: http://search-api.search-app.svc.cluster.local:80
-
     search-api:
       name: search-api
       replicaCount: 1
@@ -83,3 +81,8 @@ application-template:
               key: database
         - name: REDIS_HOST
           value: redis-search-app.redis.svc.cluster.local
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-search-app-credentials
+              key: password

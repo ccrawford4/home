@@ -9,5 +9,11 @@ defaults:
 
 instances:
   - name: redis-search-app
-    secretName: redis-search-app-credentials
     hostPath: /mnt/data/redis-search-app
+    clusterSecret:
+      name: redis-search-app-credentials
+      targetName: redis-search-app-credentials
+      targetNamespace: search-app
+      data:
+        - secretKey: password
+          remoteRefKey: search-app-redis-password

@@ -23,7 +23,7 @@ spec:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ .secretName }}
+              name: {{ .clusterSecret.name }}
               key: password
         command:
         - redis-server

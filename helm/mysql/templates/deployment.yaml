@@ -23,7 +23,17 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ .secretName }}
+              name: {{ .clusterSecret.name }}
+              key: password
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .clusterSecret.name }}
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .clusterSecret.name }}
               key: password
         ports:
         - containerPort: {{ .port | default $.Values.defaults.port }}
