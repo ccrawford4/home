@@ -79,7 +79,3 @@ gcloud iam service-accounts keys create credentials \
 scp gcp-sa-secret.yaml <hostname>:~/gcp-sa-secret.yaml
 ssh <hostname> "kubectl apply -f gcp-sa-secret.yaml"
 ```
-
-### TODO: Add terraform
-
-### TODO: Update the secret value in google and set a new version
