@@ -1,0 +1,13 @@
+namespace: redis
+
+# Default values for optional parameters
+defaults:
+  port: 6379
+  image: redis:8.2
+  storageSize: 2Gi # These are small apps we don't need much storage
+  storageClass: manual
+
+instances:
+  - name: redis-search-app
+    secretName: redis-search-app-credentials
+    hostPath: /mnt/data/redis-search-app

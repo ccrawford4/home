@@ -1,0 +1,19 @@
+{{- range .Values.instances }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .name }}-pv-volume
+  namespace: {{ $.Values.namespace }}
+  labels:
+    type: local
+    instance: {{ .name }}
+spec:
+  storageClassName: {{ .storageClass | default $.Values.defaults.storageClass }}
+  capacity:
+    storage: {{ .storageSize | default $.Values.defaults.storageSize }}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .hostPath | quote }}
+{{- end }}

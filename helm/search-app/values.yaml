@@ -64,32 +64,22 @@ application-template:
         targetCPUUtilizationPercentage: 80
         targetMemoryUtilizationPercentage: 80
       environment:
+        - name: MYSQL_HOST
+          value: mysql-search-app.mysql.svc.cluster.local
         - name: MYSQL_USERNAME
           valueFrom:
             secretKeyRef:
-              name: search-api-secrets
-              key: mysql-username
+              name: mysql-search-app-credentials
+              key: username
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: search-api-secrets
-              key: mysql-password
-        - name: REDIS_HOST
+              name: mysql-search-app-credentials
+              key: password
+        - name: MYSQL_DATABASE
           valueFrom:
             secretKeyRef:
-              name: search-api-secrets
-              key: redis-host
-
-secrets:
-  - name: search-api-secrets
-    targetName: search-api-secrets
-    secretsKey: mysql-username
-    remoteRefKey: mysql-username
-  - name: search-api-secrets-password
-    targetName: search-api-secrets
-    secretsKey: mysql-password
-    remoteRefKey: mysql-password
-  - name: search-api-secrets-redis
-    targetName: search-api-secrets
-    secretsKey: redis-host
-    remoteRefKey: redis-host
+              name: mysql-search-app-credentials
+              key: database
+        - name: REDIS_HOST
+          value: redis-search-app.redis.svc.cluster.local
