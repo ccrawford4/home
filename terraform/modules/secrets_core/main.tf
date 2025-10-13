@@ -1,28 +1,18 @@
-locals {
-   secrets = toset(var.secrets)
+resource "google_secret_manager_secret" "secret" {
+  for_each = toset(var.secrets)
+  secret_id = each.value
+  labels = {
+    label = var.label
+  }
+  replication {
+    auto {}
+  }
 }
 
-module "google_service_account" {
-  source = "./service_account"
-  account_id = var.google_service_account_id
-  project_id = var.project_id
-  project_number = var.project_number
-  k8s_namespace = var.k8s_namespace
-  k8s_service_account = var.k8s_service_account
-  workload_identity_pool_id = var.workload_identity_pool_id
-}
-
-module "secrets_iam_binding" {
-  for_each = local.secrets
-  source = "./iam_policy_binding"
-
-  project_id            = var.project_id
-  project_number        = var.project_number
-  region                = var.region
-  secret_id             = each.key
-  secret_label          = var.label
-  k8s_namespace         = var.k8s_namespace
-  k8s_service_account   = var.k8s_service_account
-  google_service_account_email = module.google_service_account.email
-  workload_identity_pool_id = var.workload_identity_pool_id
+resource "google_secret_manager_secret_iam_binding" "sa_secret_binding" {
+  for_each = toset(var.secrets)
+  project = var.project_id
+  secret_id = google_secret_manager_secret.secret[each.value].secret_id
+  role = "roles/secretmanager.secretAccessor"
+  members = [ var.service_account_email ]
 }

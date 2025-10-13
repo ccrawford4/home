@@ -1,0 +1,13 @@
+namespace: mysql
+
+# Default values for optional parameters
+defaults:
+  port: 3306
+  image: mysql:9.0.0
+  storageSize: 5Gi # These are small apps we don't need much storage
+  storageClass: manual
+
+instances:
+  - name: mysql-search-app
+    secretName: mysql-search-app-credentials
+    hostPath: /mnt/data/mysql-search-app
