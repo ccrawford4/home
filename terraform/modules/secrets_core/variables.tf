@@ -28,7 +28,7 @@ variable "k8s_service_account_name" {
   type        = string
 }
 
-variable "service_account_email" {
-  description = "Service account email that will have access to the secrets"
+variable "service_account_member" {
+  description = "Service account member that will have access to the secrets"
   type        = string
 }
