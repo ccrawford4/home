@@ -64,17 +64,32 @@ application-template:
         targetCPUUtilizationPercentage: 80
         targetMemoryUtilizationPercentage: 80
       environment:
-        - name: DSN
+        - name: MYSQL_USERNAME
           valueFrom:
             secretKeyRef:
               name: search-api-secrets
-              key: dsn
+              key: mysql-username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: search-api-secrets
+              key: mysql-password
         - name: REDIS_HOST
           valueFrom:
             secretKeyRef:
               name: search-api-secrets
+              key: redis-host
 
 secrets:
   - name: search-api-secrets
     targetName: search-api-secrets
-    secretsKey: dsn
+    secretsKey: mysql-username
+    remoteRefKey: mysql-username
+  - name: search-api-secrets-password
+    targetName: search-api-secrets
+    secretsKey: mysql-password
+    remoteRefKey: mysql-password
+  - name: search-api-secrets-redis
+    targetName: search-api-secrets
+    secretsKey: redis-host
+    remoteRefKey: redis-host

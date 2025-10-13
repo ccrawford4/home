@@ -8,11 +8,6 @@ variable "label" {
   type        = string
 }
 
-variable "k8s_namespace" {
-  description = "Kubernetes namespace where the service account is located"
-  type        = string
-}
-
 variable "project_id" {
   description = "GCP project ID"
   type        = string
@@ -20,11 +15,6 @@ variable "project_id" {
 
 variable "project_number" {
   description = "GCP project number"
-  type        = string
-}
-
-variable "k8s_service_account_name" {
-  description = "Kubernetes service account name that will access the secrets"
   type        = string
 }
 
