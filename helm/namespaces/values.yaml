@@ -3,3 +3,4 @@ namespaces:
   - name: networking
   - name: external-secrets
   - name: search-app
+  - name: mysql
