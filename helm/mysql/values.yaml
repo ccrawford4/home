@@ -1,0 +1,58 @@
+# MySQL instance name - can be customized for different instances
+name: mysql
+namespace: mysql
+
+# Cluster secret store name for external secrets
+clusterSecretStoreName: cluster-secret-store
+
+# MySQL image configuration
+image:
+  repository: mysql
+  tag: "8.0"
+  pullPolicy: IfNotPresent
+
+# MySQL service configuration
+service:
+  type: ClusterIP
+  port: 3306
+
+# PersistentVolumeClaim configuration
+persistence:
+  enabled: true
+  storageClass: ""  # Leave empty to use default storage class
+  accessMode: ReadWriteOnce
+  size: 20Gi
+
+# MySQL configuration
+mysql:
+  # Database to create on first run (optional)
+  database: ""
+
+# Secrets configuration
+# You can use either static secrets or external secrets (like search-app)
+secrets:
+  # Use external secrets (set to true to use external-secrets.io)
+  useExternalSecrets: true
+  
+  # When useExternalSecrets is true, configure these:
+  externalSecrets:
+    # Remote reference keys in your secret manager
+    rootPasswordKey: mysql-root-password
+    userPasswordKey: mysql-user-password
+    usernameKey: mysql-username
+  
+  # When useExternalSecrets is false, use static values:
+  # WARNING: These will be stored in base64 in the cluster
+  static:
+    rootPassword: ""
+    username: ""
+    password: ""
+
+# Resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
