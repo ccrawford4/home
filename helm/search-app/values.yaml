@@ -18,16 +18,20 @@ application-template:
         pullPolicy: IfNotPresent
         tag: "latest"
         port: 3000
+      service:
+        enabled: true
       container:
         envFrom:
           - configMapRef:
               name: search-app-config
     - name: search-app-backend
       image:
-        repository: ccrawford4/search-app-backend
+        repository: ccrawford4/search-api
         pullPolicy: IfNotPresent
         tag: "latest"
         port: 8080
+      service:
+        enabled: true
       container:
         envFrom:
           - configMapRef:
