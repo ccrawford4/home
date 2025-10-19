@@ -1,16 +1,25 @@
+{{- range .Values.deployments }}
+{{- if .service }}
+{{- if .service.enabled }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.name }}
-  namespace: {{ .Values.namespace }}
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
   labels:
-    {{- include "application-template.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .service.type | default "ClusterIP" }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ .service.port | default 80 }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
-    {{- include "application-template.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+{{- end }}
+{{- end }}
+{{- end }}
