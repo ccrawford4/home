@@ -28,7 +28,7 @@ application-template:
       image:
         repository: ccrawford4/search-api
         pullPolicy: IfNotPresent
-        tag: "amd64-v1.0.2"
+        tag: "arm64-v1.0.0"
         port: 8080
       service:
         enabled: true
