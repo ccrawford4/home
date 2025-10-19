@@ -26,7 +26,7 @@ application-template:
               name: search-app-config
     - name: search-app-backend
       image:
-        repository: ccrawford4/search-api
+        repository: ccrawford4/searchapi
         pullPolicy: IfNotPresent
         tag: "arm64-v1.0.0"
         port: 8080
