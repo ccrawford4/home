@@ -5,6 +5,12 @@ application-template:
   serviceAccount:
     create: true
     name: search-app
+
+  configMaps:
+    - name: search-app-config
+      data:
+        API_ENDPOINT: "http://search-app-backend.search-app.svc.cluster.local:8080"
+
   deployments:
     - name: search-app-frontend
       image:
@@ -12,8 +18,37 @@ application-template:
         pullPolicy: IfNotPresent
         tag: "latest"
         port: 3000
+      container:
+        envFrom:
+          - configMapRef:
+              name: search-app-config
+    - name: search-app-backend
+      image:
+        repository: ccrawford4/search-app-backend
+        pullPolicy: IfNotPresent
+        tag: "latest"
+        port: 8080
+      container:
+        envFrom:
+          - configMapRef:
+              name: search-app-config
+        env:
+          - name: DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: DATABASE_USERNAME
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: DATABASE_PASSWORD
+
   secrets:
-    - name: api-endpoint
+    - name: search-app-secrets
+      targetName: search-app-secrets
       data:
-        key: endpoint
-        value: http://localhost:8080/api
+        - secretKey: DATABASE_USERNAME
+          remoteRefKey: search-app-db-username
+        - secretKey: DATABASE_PASSWORD
+          remoteRefKey: search-app-db-password
