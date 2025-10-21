@@ -32,6 +32,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: gcp-sa-secret
+  namespace: default
 type: Opaque
 stringData:
   secret-access-credentials: |-

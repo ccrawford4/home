@@ -3,3 +3,4 @@ clusterSecretStores:
     projectID: "home-473419"
     secretName: gcp-sa-secret
     secretKey: secret-access-credentials
+    secretNamespace: default

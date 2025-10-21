@@ -57,6 +57,8 @@ ssh <hostname>
 kubectl apply -f gcp-sa-secret.yaml
 ```
 
+**Note:** The secret is created in the `default` namespace, which allows the ClusterSecretStore to reference it from any namespace. The ClusterSecretStore is configured to look for this secret in the `default` namespace.
+
 This will:
 1. Create the service account key
 2. Generate the `gcp-sa-secret.yaml` with the credentials
@@ -72,13 +74,15 @@ gcloud iam service-accounts keys create credentials \
     --iam-account=secrets-manager-sa@<project-id>.iam.gserviceaccount.com
 ```
 
-2. Update `gcp-sa-secret.yaml` with the contents of the credentials file
+2. Update `gcp-sa-secret.yaml` with the contents of the credentials file (ensure the namespace is set to `default`)
 
-3. Copy the secret to your cluster and apply it
+3. Copy the secret to your cluster and apply it to the default namespace
 ```bash
 scp gcp-sa-secret.yaml <hostname>:~/gcp-sa-secret.yaml
 ssh <hostname> "kubectl apply -f gcp-sa-secret.yaml"
 ```
+
+**Important:** The ClusterSecretStore is configured to reference this secret from the `default` namespace. This allows ExternalSecrets in any namespace to use the ClusterSecretStore to authenticate with GCP Secret Manager.
 
 ### TODO: Add terraform
 
