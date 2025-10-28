@@ -37,12 +37,10 @@ secrets:
   # When useExternalSecrets is true, configure these:
   externalSecrets:
     # Remote reference keys in your secret manager
-    rootPasswordKey: mysql-root-password
-    userPasswordKey: mysql-user-password
-    usernameKey: mysql-username
+    rootPasswordKey: search-app-db-root-password
+    userPasswordKey: search-app-db-password
+    usernameKey: search-app-db-username
   
-  # When useExternalSecrets is false, use static values:
-  # WARNING: These will be stored in base64 in the cluster
   static:
     rootPassword: ""
     username: ""
