@@ -2,14 +2,9 @@ locals {
    secrets = toset(var.secrets)
 }
 
-module "google_service_account" {
-  source = "./service_account"
-  account_id = var.google_service_account_id
-  project_id = var.project_id
-  project_number = var.project_number
-  k8s_namespace = var.k8s_namespace
-  k8s_service_account = var.k8s_service_account
-  workload_identity_pool_id = var.workload_identity_pool_id
+resource "google_service_account" "service_account" {
+  account_id   = var.google_service_account_id
+  display_name = "${var.google_service_account_id} Service Account"
 }
 
 module "secrets_iam_binding" {
@@ -23,6 +18,6 @@ module "secrets_iam_binding" {
   secret_label          = var.label
   k8s_namespace         = var.k8s_namespace
   k8s_service_account   = var.k8s_service_account
-  google_service_account_email = module.google_service_account.email
+  google_service_account_email = google_service_account.service_account.email
   workload_identity_pool_id = var.workload_identity_pool_id
 }
