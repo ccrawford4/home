@@ -47,7 +47,7 @@ spec:
           image: "{{ .image.repository }}:{{ .image.tag | default "latest" }}"
           imagePullPolicy: {{ .image.pullPolicy | default "IfNotPresent" }}
           {{- if .container }}
-          {{- with .container.environment }}
+          {{- with .container.env }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
