@@ -56,3 +56,36 @@ application-template:
           remoteRefKey: search-app-db-username
         - secretKey: db-password
           remoteRefKey: search-app-db-password
+
+mysql:
+  name: search-app-mysql
+  namespace: search-app
+  clusterSecretStoreName: cluster-secret-store
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  # Alternative naming for convenience
+  image_name: mysql
+  database_name: searchapp
+  service:
+    type: ClusterIP
+    port: 3306
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 20Gi
+  secrets:
+    useExternalSecrets: true
+    externalSecrets:
+      rootPasswordKey: search-app-db-root-password
+      userPasswordKey: search-app-db-password
+      usernameKey: search-app-db-username
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi

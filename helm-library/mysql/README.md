@@ -2,6 +2,8 @@
 
 A simple and straightforward Helm chart for deploying a single instance MySQL database on Kubernetes, based on the [Kubernetes guide for running single instance stateful applications](https://kubernetes.io/docs/tasks/run-application/run-single-instance-stateful-application/).
 
+This chart can be used either as a standalone deployment or as a dependency in other Helm charts.
+
 ## Features
 
 - Simple MySQL single instance deployment
@@ -10,6 +12,7 @@ A simple and straightforward Helm chart for deploying a single instance MySQL da
 - Secret management via external-secrets.io or static Kubernetes secrets
 - Configurable resource limits
 - Optional database creation on first run
+- Can be used as a dependency chart in other Helm applications
 
 ## Prerequisites
 
@@ -20,7 +23,57 @@ A simple and straightforward Helm chart for deploying a single instance MySQL da
 
 ## Installation
 
-### Using External Secrets (Recommended)
+### As a Dependency Chart (Recommended)
+
+This is the recommended way to use this chart. Include it as a dependency in your application's `Chart.yaml`:
+
+```yaml
+dependencies:
+  - name: mysql
+    version: 0.1.0
+    repository: "file://../../helm-library/mysql"
+```
+
+Then configure it in your application's `values.yaml`:
+
+```yaml
+mysql:
+  name: my-app-mysql
+  namespace: my-app
+  clusterSecretStoreName: cluster-secret-store
+  image_name: mysql  # or use image.repository
+  database_name: myappdb  # or use mysql.database
+  service:
+    type: ClusterIP
+    port: 3306
+  persistence:
+    enabled: true
+    size: 20Gi
+  secrets:
+    useExternalSecrets: true
+    externalSecrets:
+      rootPasswordKey: my-app-db-root-password
+      userPasswordKey: my-app-db-password
+      usernameKey: my-app-db-username
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+```
+
+After adding the dependency, run:
+
+```bash
+helm dependency update
+helm install my-app ./my-app
+```
+
+### As a Standalone Chart
+
+#### Using External Secrets (Recommended)
 
 1. First, ensure you have your MySQL credentials stored in your secret manager (e.g., Google Secret Manager, AWS Secrets Manager, etc.)
 
@@ -42,10 +95,10 @@ secrets:
 3. Install the chart:
 
 ```bash
-helm install my-mysql ./helm/mysql -f my-mysql-values.yaml
+helm install my-mysql ./helm-library/mysql -f my-mysql-values.yaml
 ```
 
-### Using Static Secrets
+#### Using Static Secrets
 
 For testing or non-production environments, you can use static secrets:
 
@@ -67,7 +120,7 @@ secrets:
 2. Install the chart:
 
 ```bash
-helm install mysql-test ./helm/mysql -f mysql-static-values.yaml
+helm install mysql-test ./helm-library/mysql -f mysql-static-values.yaml
 ```
 
 **WARNING:** Static secrets are stored in base64 in the cluster and are less secure. Use external secrets for production deployments.
@@ -84,6 +137,7 @@ The following table lists the configurable parameters of the MySQL chart and the
 | `image.repository` | MySQL image repository | `mysql` |
 | `image.tag` | MySQL image tag | `8.0` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
+| `image_name` | Alternative: MySQL image name (overrides image.repository if set) | `""` |
 | `service.type` | Kubernetes service type | `ClusterIP` |
 | `service.port` | MySQL service port | `3306` |
 | `persistence.enabled` | Enable persistent storage | `true` |
@@ -91,9 +145,10 @@ The following table lists the configurable parameters of the MySQL chart and the
 | `persistence.accessMode` | PVC access mode | `ReadWriteOnce` |
 | `persistence.size` | PVC size | `20Gi` |
 | `mysql.database` | Optional database to create on first run | `""` |
+| `database_name` | Alternative: Database name (overrides mysql.database if set) | `""` |
 | `secrets.useExternalSecrets` | Use external-secrets.io | `true` |
 | `secrets.externalSecrets.rootPasswordKey` | Secret manager key for root password | `mysql-root-password` |
-| `secrets.externalSecrets.userPasswordKey` | Secret manager key for user password | `mysql-user-password` |
+| `secrets.externalSecrets.userPasswordKey` | Secret manager key for user password | `mysql-password` |
 | `secrets.externalSecrets.usernameKey` | Secret manager key for username | `mysql-username` |
 | `secrets.static.rootPassword` | Static root password (when useExternalSecrets is false) | `""` |
 | `secrets.static.username` | Static username (when useExternalSecrets is false) | `""` |
@@ -109,10 +164,10 @@ You can easily deploy multiple MySQL instances by using different values files:
 
 ```bash
 # Instance 1
-helm install mysql-app1 ./helm/mysql -f mysql-app1-values.yaml
+helm install mysql-app1 ./helm-library/mysql -f mysql-app1-values.yaml
 
 # Instance 2
-helm install mysql-app2 ./helm/mysql -f mysql-app2-values.yaml
+helm install mysql-app2 ./helm-library/mysql -f mysql-app2-values.yaml
 ```
 
 Just make sure to use different `name` and `namespace` values in each values file.
@@ -151,9 +206,28 @@ kubectl delete pvc <name>-pvc -n <namespace>
 
 ## Example: Integration with Applications
 
-Similar to the `search-app` example in this repository, you can configure your application to use MySQL:
+See the `search-app` example in this repository for a complete example of how to use this chart as a dependency:
 
 ```yaml
+# Chart.yaml
+dependencies:
+  - name: mysql
+    version: 0.1.0
+    repository: "file://../../helm-library/mysql"
+
+# values.yaml
+mysql:
+  name: search-app-mysql
+  namespace: search-app
+  database_name: searchapp
+  secrets:
+    useExternalSecrets: true
+    externalSecrets:
+      rootPasswordKey: search-app-db-root-password
+      userPasswordKey: search-app-db-password
+      usernameKey: search-app-db-username
+
+# In your application deployment:
 deployments:
   - name: my-app
     image:
@@ -162,15 +236,15 @@ deployments:
     container:
       env:
         - name: DATABASE_HOST
-          value: "mysql.mysql.svc.cluster.local"
+          value: "search-app-mysql.search-app.svc.cluster.local"
         - name: DATABASE_USERNAME
           valueFrom:
             secretKeyRef:
-              name: mysql-secrets
+              name: search-app-mysql-secrets
               key: MYSQL_USER
         - name: DATABASE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mysql-secrets
+              name: search-app-mysql-secrets
               key: MYSQL_PASSWORD
 ```

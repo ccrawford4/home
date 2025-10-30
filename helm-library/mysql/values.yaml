@@ -11,6 +11,10 @@ image:
   tag: "8.0"
   pullPolicy: IfNotPresent
 
+# Alternative naming (image_name for backward compatibility or convenience)
+# If image_name is set, it will override image.repository
+image_name: ""
+
 # MySQL service configuration
 service:
   type: ClusterIP
@@ -28,6 +32,10 @@ mysql:
   # Database to create on first run (optional)
   database: ""
 
+# Alternative naming (database_name for backward compatibility or convenience)
+# If database_name is set, it will override mysql.database
+database_name: ""
+
 # Secrets configuration
 # You can use either static secrets or external secrets (like search-app)
 secrets:
@@ -37,9 +45,9 @@ secrets:
   # When useExternalSecrets is true, configure these:
   externalSecrets:
     # Remote reference keys in your secret manager
-    rootPasswordKey: search-app-db-root-password
-    userPasswordKey: search-app-db-password
-    usernameKey: search-app-db-username
+    rootPasswordKey: mysql-root-password
+    userPasswordKey: mysql-password
+    usernameKey: mysql-username
   
   static:
     rootPassword: ""

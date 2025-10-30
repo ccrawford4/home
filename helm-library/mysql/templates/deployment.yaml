@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image_name | default .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: MYSQL_ROOT_PASSWORD
@@ -40,9 +40,10 @@ spec:
             secretKeyRef:
               name: {{ .Values.name }}-secrets
               key: MYSQL_PASSWORD
-        {{- if .Values.mysql.database }}
+        {{- $database := .Values.database_name | default .Values.mysql.database }}
+        {{- if $database }}
         - name: MYSQL_DATABASE
-          value: {{ .Values.mysql.database | quote }}
+          value: {{ $database | quote }}
         {{- end }}
         ports:
         - containerPort: 3306
