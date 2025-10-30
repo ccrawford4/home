@@ -37,22 +37,22 @@ application-template:
           - configMapRef:
               name: search-app-config
         env:
-          - name: DATABASE_USERNAME
+          - name: MYSQL_USERNAME
             valueFrom:
               secretKeyRef:
                 name: search-app-secrets
-                key: DATABASE_USERNAME
-          - name: DATABASE_PASSWORD
+                key: db-username
+          - name: MYSQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: search-app-secrets
-                key: DATABASE_PASSWORD
+                key: db-password
 
   secrets:
     - name: search-app-secrets
       targetName: search-app-secrets
       data:
-        - secretKey: DATABASE_USERNAME
+        - secretKey: db-username
           remoteRefKey: search-app-db-username
-        - secretKey: DATABASE_PASSWORD
+        - secretKey: db-password
           remoteRefKey: search-app-db-password
