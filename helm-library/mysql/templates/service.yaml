@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: mysql
+      protocol: TCP
+      name: mysql
+  selector:
+    app.kubernetes.io/name: {{ .Values.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
