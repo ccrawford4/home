@@ -12,6 +12,7 @@ application-template:
         API_ENDPOINT: "http://search-app-backend.search-app.svc.cluster.local:8080"
         MYSQL_HOST: "search-app-mysql.search-app.svc.cluster.local"
         MYSQL_DATABASE: "searchapp"
+        REDIS_HOST: "search-app-redis.search-app.svc.cluster.local"
 
   deployments:
     - name: search-app-frontend
@@ -49,6 +50,11 @@ application-template:
               secretKeyRef:
                 name: search-app-secrets
                 key: db-password
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: redis-password
 
   secrets:
     - name: search-app-secrets
@@ -58,6 +64,8 @@ application-template:
           remoteRefKey: search-app-db-username
         - secretKey: db-password
           remoteRefKey: search-app-db-password
+        - secretKey: redis-password
+          remoteRefKey: search-app-redis-password
 
 mysql:
   name: search-app-mysql
