@@ -12,7 +12,7 @@ application-template:
         API_ENDPOINT: "http://search-app-backend.search-app.svc.cluster.local:8080"
         MYSQL_HOST: "search-app-mysql.search-app.svc.cluster.local"
         MYSQL_DATABASE: "searchapp"
-        REDIS_HOST: "search-app-redis.search-app.svc.cluster.local"
+        REDIS_HOST: "search-app-redis.search-app.svc.cluster.local:6379"
 
   deployments:
     - name: search-app-frontend
