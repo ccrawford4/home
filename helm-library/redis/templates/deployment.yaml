@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Values.name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: redis
+        image: "{{ .Values.image_name | default .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - redis-server
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.name }}-secrets
+              key: REDIS_PASSWORD
+        ports:
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: redis-persistent-storage
+          mountPath: /data
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: redis-persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.name }}-pvc
+      {{- end }}

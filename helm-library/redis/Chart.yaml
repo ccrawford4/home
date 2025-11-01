@@ -1,0 +1,6 @@
+apiVersion: v2
+name: redis
+description: A Helm chart for Redis single instance stateful application that can be used as a dependency
+type: application
+version: 0.1.0
+appVersion: "7.0"
