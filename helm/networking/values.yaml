@@ -3,10 +3,6 @@ namespaces:
     rules:
       - host: search.calum.run
         paths:
-          - path: /api
-            pathType: Prefix
-            serviceName: search-app-backend
-            servicePort: 80
           - path: /
             pathType: Prefix
             serviceName: search-app-frontend
