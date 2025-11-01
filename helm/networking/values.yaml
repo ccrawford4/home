@@ -3,9 +3,13 @@ namespaces:
     rules:
       - host: search.calum.run
         paths:
+          - path: /api
+            pathType: Prefix
+            serviceName: search-app-backend
+            servicePort: 80
           - path: /
             pathType: Prefix
-            serviceName: search-app
+            serviceName: search-app-frontend
             servicePort: 80
   argocd:
     rules:
