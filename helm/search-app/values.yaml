@@ -55,6 +55,31 @@ application-template:
               secretKeyRef:
                 name: search-app-secrets
                 key: redis-password
+          - name: GITHUB_ID
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: github-id
+          - name: GITHUB_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: github-secret
+          - name: GOOGLE_ID
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: google-id
+          - name: GOOGLE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: google-secret
+          - name: NEXTAUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: nextauth-secret
 
   secrets:
     - name: search-app-secrets
@@ -66,6 +91,16 @@ application-template:
           remoteRefKey: search-app-db-password
         - secretKey: redis-password
           remoteRefKey: search-app-redis-password
+        - secretKey: github-id
+          remoteRefKey: search-app-github-id
+        - secretKey: github-secret
+          remoteRefKey: search-app-github-secret
+        - secretKey: google-id
+          remoteRefKey: search-app-google-id
+        - secretKey: google-secret
+          remoteRefKey: search-app-google-secret
+        - secretKey: nextauth-secret
+          remoteRefKey: search-app-nextauth-secret
 
 mysql:
   name: search-app-mysql
