@@ -89,3 +89,32 @@ mysql:
     requests:
       cpu: 250m
       memory: 512Mi
+
+# Example Redis configuration (commented out - uncomment to use)
+# redis:
+#   name: search-app-redis
+#   namespace: search-app
+#   clusterSecretStoreName: cluster-secret-store
+#   image:
+#     repository: redis
+#     tag: "7.0"
+#     pullPolicy: IfNotPresent
+#   service:
+#     type: ClusterIP
+#     port: 6379
+#   persistence:
+#     enabled: true
+#     storageClass: ""
+#     accessMode: ReadWriteOnce
+#     size: 8Gi
+#   secrets:
+#     useExternalSecrets: true
+#     externalSecrets:
+#       passwordKey: search-app-redis-password
+#   resources:
+#     limits:
+#       cpu: 500m
+#       memory: 512Mi
+#     requests:
+#       cpu: 250m
+#       memory: 256Mi
