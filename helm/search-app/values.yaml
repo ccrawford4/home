@@ -10,6 +10,8 @@ application-template:
     - name: search-app-config
       data:
         API_ENDPOINT: "http://search-app-backend.search-app.svc.cluster.local:8080"
+        MYSQL_HOST: "search-app-mysql.search-app.svc.cluster.local"
+        MYSQL_DATABASE: "searchapp"
 
   deployments:
     - name: search-app-frontend
@@ -65,8 +67,6 @@ mysql:
     repository: mysql
     tag: "8.0"
     pullPolicy: IfNotPresent
-  # Alternative naming for convenience
-  image_name: mysql
   database_name: searchapp
   service:
     type: ClusterIP
