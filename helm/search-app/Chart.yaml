@@ -11,3 +11,6 @@ dependencies:
   - name: mysql
     version: 0.1.0
     repository: "file://../../helm-library/mysql"
+  - name: redis
+    version: 0.1.0
+    repository: "file://../../helm-library/redis"
