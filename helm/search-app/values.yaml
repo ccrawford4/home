@@ -27,6 +27,33 @@ application-template:
         envFrom:
           - configMapRef:
               name: search-app-config
+        env:
+          - name: GITHUB_ID
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: github-id
+          - name: GITHUB_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: github-secret
+          - name: GOOGLE_ID
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: google-id
+          - name: GOOGLE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: google-secret
+          - name: NEXTAUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: search-app-secrets
+                key: nextauth-secret
+
     - name: search-app-backend
       image:
         repository: ccrawford4/searchapi
@@ -55,32 +82,7 @@ application-template:
               secretKeyRef:
                 name: search-app-secrets
                 key: redis-password
-          - name: GITHUB_ID
-            valueFrom:
-              secretKeyRef:
-                name: search-app-secrets
-                key: github-id
-          - name: GITHUB_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: search-app-secrets
-                key: github-secret
-          - name: GOOGLE_ID
-            valueFrom:
-              secretKeyRef:
-                name: search-app-secrets
-                key: google-id
-          - name: GOOGLE_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: search-app-secrets
-                key: google-secret
-          - name: NEXTAUTH_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: search-app-secrets
-                key: nextauth-secret
-
+ 
   secrets:
     - name: search-app-secrets
       targetName: search-app-secrets
