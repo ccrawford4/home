@@ -23,6 +23,7 @@ application-template:
         port: 3000
       service:
         enabled: true
+        port: 3000
       container:
         envFrom:
           - configMapRef:
@@ -64,6 +65,7 @@ application-template:
         port: 8080
       service:
         enabled: true
+        port: 8080
       container:
         envFrom:
           - configMapRef:

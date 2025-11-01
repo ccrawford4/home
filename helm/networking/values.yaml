@@ -6,7 +6,7 @@ namespaces:
           - path: /
             pathType: Prefix
             serviceName: search-app-frontend
-            servicePort: 80
+            servicePort: 3000
   argocd:
     rules:
       - host: argocd.calum.run
