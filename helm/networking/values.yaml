@@ -15,3 +15,12 @@ namespaces:
             pathType: Prefix
             serviceName: argocd-server
             servicePort: 80
+
+  portfolio:
+    rules:
+      - host: about.calum.run
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: portfolio
+            servicePort: 3000

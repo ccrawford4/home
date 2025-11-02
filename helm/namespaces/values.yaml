@@ -4,3 +4,4 @@ namespaces:
   - name: external-secrets
   - name: search-app
   - name: mysql
+  - name: portfolio
