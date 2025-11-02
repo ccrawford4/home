@@ -184,7 +184,7 @@ echo -n "your-secret-value" | gcloud secrets versions add your-app-secret-1 \
 **Important Notes:**
 - Secrets are created with no versions by default - you must add a version with the actual value
 - Always use `echo -n` to avoid adding a newline character to your secret
-- For sensitive values, consider using a file: `gcloud secrets versions add secret-name --data-file=/path/to/file`
+- For sensitive values, consider using a file: `gcloud secrets versions add secret-name --data-file=/path/to/file --project=<project-id>`
 
 #### 4. Create Helm Configuration
 
