@@ -103,7 +103,8 @@ If you prefer to do it manually:
 1. Create the service account key
 ```bash
 gcloud iam service-accounts keys create credentials \
-    --iam-account=secrets-manager-sa@<project-id>.iam.gserviceaccount.com
+    --iam-account=secrets-manager-sa@<project-id>.iam.gserviceaccount.com \
+    --project=<project-id>
 ```
 
 2. Update `gcp-sa-secret.yaml` with the contents of the credentials file (ensure the namespace is set to `default`)
@@ -140,6 +141,7 @@ module "your-app-secrets" {
       # Add all secrets your application needs
    ]
    google_service_account_id = "secrets-manager-sa"
+   # Reference the workload identity pool defined in wif.tf
    workload_identity_pool_id = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
 ```
