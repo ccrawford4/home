@@ -1,5 +1,35 @@
 # home
-Kubernetes configuration for a cluster running on some Rasberry PIs
+
+A production-ready Kubernetes home cluster running on Raspberry Pis, hosting multiple web applications and services. This repository contains all the Infrastructure as Code (IaC) configurations, Helm charts, and deployment manifests needed to run and manage the cluster using GitOps principles with ArgoCD.
+
+## Overview
+
+This home cluster is built on K3s (lightweight Kubernetes) and leverages modern cloud-native practices including:
+- **GitOps** deployment model with ArgoCD ApplicationSets
+- **Automated secret management** using External Secrets Operator with GCP Secret Manager
+- **Ingress routing** with Cloudflare tunneling for secure external access
+- **Containerized applications** deployed via Helm charts
+- **Infrastructure as Code** for reproducible and version-controlled infrastructure
+
+## Hosted Services
+
+The cluster currently hosts the following production services:
+
+### 🔍 [search.calum.run](https://search.calum.run) - Search Engine
+A full-featured search engine with user authentication and search history tracking.
+- **Repository:** [ccrawford4/search](https://github.com/ccrawford4/search)
+- **Tech Stack:** Next.js frontend, Go backend, MySQL database, Redis cache
+- **Features:** OAuth authentication (GitHub, Google), search history, persistent storage
+
+### 👤 [about.calum.run](https://about.calum.run) - Portfolio Website
+Personal portfolio and about page.
+- **Repository:** [ccrawford4/portfolio-next](https://github.com/ccrawford4/portfolio-next)
+- **Tech Stack:** Next.js
+
+### 🚀 [argocd.calum.run](https://argocd.calum.run) - ArgoCD
+GitOps continuous delivery platform managing all applications in the cluster.
+- **Purpose:** Automated application deployment and lifecycle management
+- **Features:** Self-healing deployments, automated sync from Git, application health monitoring
 
 ## Prerequisites
 - A set of Raspberry Pis with K3s installed and running
