@@ -1,6 +1,6 @@
 # home
 
-A production-ready Kubernetes home cluster running on Raspberry Pis, hosting multiple web applications and services. This repository contains all the Infrastructure as Code (IaC) configurations, Helm charts, and deployment manifests needed to run and manage the cluster using GitOps principles with ArgoCD.
+A Kubernetes home cluster running on Raspberry Pis, hosting multiple web applications and services. This repository contains all the Infrastructure as Code (IaC) configurations, Helm charts, and deployment manifests needed to run and manage the cluster using GitOps principles with ArgoCD.
 
 ## Overview
 
