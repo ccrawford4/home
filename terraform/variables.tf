@@ -40,3 +40,9 @@ variable "cloudflare_email" {
   description = "The Cloudflare account email"
   type        = string
 }
+
+variable "k8s_server_ip" {
+  description = "The Kubernetes API server IP address"
+  type        = string
+  sensitive   = true
+}
