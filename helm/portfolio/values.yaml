@@ -11,7 +11,7 @@ application-template:
       image:
         repository: ccrawford4/portfolio
         pullPolicy: IfNotPresent
-        tag: "v0.0.4"
+        tag: "v1.0.0"
         port: 3000
       service:
         enabled: true
