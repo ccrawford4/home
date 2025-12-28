@@ -28,11 +28,11 @@ application-template:
               secretKeyRef:
                 name: ai-agent-api-secrets
                 key: kube-api-server
-          # - name: OPENAI_API_KEY
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: ai-agent-api-secrets
-          #       key: openai-api-key
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ai-agent-api-secrets
+                key: openai-api-key
           - name: PRODUCTION_MODE
             value: "true"
 
@@ -43,5 +43,5 @@ application-template:
           remoteRefKey: ai-agent-api-chat-api-key
         - secretKey: kube-api-server
           remoteRefKey: ai-agent-api-kube-api-server
-        # - secretKey: openai-api-key
-        #   remoteRefKey: ai-agent-api-openai-api-key
+        - secretKey: openai-api-key
+          remoteRefKey: ai-agent-api-openai-api-key
