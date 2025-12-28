@@ -16,3 +16,16 @@ application-template:
       service:
         enabled: true
         port: 3000
+      container:
+        env:
+          - name: CHAT_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: portfolio-secrets
+                key: chat-api-key
+
+  secrets:
+    - name: portfolio-secrets
+      data:
+        - secretKey: chat-api-key
+          remoteRefKey: portfolio-chat-api-key
