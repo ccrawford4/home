@@ -5,3 +5,4 @@ namespaces:
   - name: search-app
   - name: mysql
   - name: portfolio
+  - name: ai-agent-api
