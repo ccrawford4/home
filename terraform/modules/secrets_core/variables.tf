@@ -43,3 +43,9 @@ variable "workload_identity_pool_id" {
   description = "The ID of the workload identity pool to use"
   type        = string
 }
+
+variable "google_service_account_email" {
+  description = "The email of the GCP service account to be used (optional)"
+  type        = string
+  default     = null
+}

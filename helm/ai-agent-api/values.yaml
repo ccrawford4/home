@@ -1,0 +1,47 @@
+application-template:
+  name: ai-agent-api
+  namespace: ai-agent-api
+  clusterSecretStoreName: cluster-secret-store
+  serviceAccount:
+    create: true
+    name: ai-agent-api
+
+  deployments:
+    - name: ai-agent-api
+      image:
+        repository: ccrawford4/ai-agent-api
+        pullPolicy: IfNotPresent
+        tag: "v1.0.0"
+        port: 3000
+      service:
+        enabled: true
+        port: 3000
+      container:
+        env:
+          - name: CHAT_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ai-agent-api-secrets
+                key: chat-api-key
+          - name: KUBE_API_SERVER
+            valueFrom:
+              secretKeyRef:
+                name: ai-agent-api-secrets
+                key: kube-api-server
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ai-agent-api-secrets
+                key: openai-api-key
+          - name: PRODUCTION_MODE
+            value: "true"
+
+  secrets:
+    - name: ai-agent-api-secrets
+      data:
+        - secretKey: chat-api-key
+          remoteRefKey: ai-agent-api-chat-api-key
+        - secretKey: kube-api-server
+          remoteRefKey: ai-agent-api-kube-api-server
+        - secretKey: openai-api-key
+          remoteRefKey: ai-agent-api-openai-api-key
