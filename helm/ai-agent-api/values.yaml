@@ -5,6 +5,17 @@ application-template:
   serviceAccount:
     create: true
     name: ai-agent-api
+    clusterRole:
+      name: ai-agent-api
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "namespaces", "nodes"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: ["metrics.k8s.io"]
+          resources: ["pods", "nodes"]
+          verbs: ["get", "list", "watch"]
+    clusterRoleBinding:
+      name: ai-agent-api
 
   deployments:
     - name: ai-agent-api
