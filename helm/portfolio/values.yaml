@@ -24,7 +24,7 @@ application-template:
                 name: portfolio-secrets
                 key: chat-api-key
           - name: CHAT_API_URL
-            value: "http://ai-agent-api.ai-agent-api.svc.cluster.local:3000/chat"
+            value: "http://ai-agent-api.ai-agent-api.svc.cluster.local/chat"
 
   secrets:
     - name: portfolio-secrets
