@@ -14,7 +14,7 @@ spec:
   type: {{ .service.type | default "ClusterIP" }}
   ports:
     - port: {{ .service.port | default 80 }}
-      targetPort: http
+      targetPort: {{ .service.targetPort | default .service.port | default 80 }}
       protocol: TCP
       name: http
   selector:
