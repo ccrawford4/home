@@ -18,19 +18,19 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config
   config = {
     ingress = [
       {
-        hostname = "calum.run"
+        hostname = "calum.sh"
         service  = "http://${var.k8s_server_ip}"
       },
       {
-        hostname = "argocd.calum.run"
+        hostname = "argocd.calum.sh"
         service  = "http://${var.k8s_server_ip}"
       },
       {
-        hostname = "search.calum.run"
+        hostname = "search.calum.sh"
         service  = "http://${var.k8s_server_ip}"
       },
       {
-        hostname = "about.calum.run"
+        hostname = "about.calum.sh"
         service  = "http://${var.k8s_server_ip}"
       },
       {
