@@ -8,6 +8,7 @@ application-template:
 
   deployments:
     - name: portfolio
+      replicaCount: 3
       image:
         repository: ccrawford4/portfolio
         pullPolicy: IfNotPresent
