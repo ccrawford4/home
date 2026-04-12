@@ -1,7 +1,7 @@
 namespaces:
   search-app:
     rules:
-      - host: search.calum.run
+      - host: search.calum.sh
         paths:
           - path: /
             pathType: Prefix
@@ -9,7 +9,7 @@ namespaces:
             servicePort: 3000
   argocd:
     rules:
-      - host: argocd.calum.run
+      - host: argocd.calum.sh
         paths:
           - path: /
             pathType: Prefix
@@ -18,7 +18,7 @@ namespaces:
 
   portfolio:
     rules:
-      - host: about.calum.run
+      - host: about.calum.sh
         paths:
           - path: /
             pathType: Prefix

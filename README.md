@@ -15,7 +15,7 @@ This home cluster is built on K3s (lightweight Kubernetes) and leverages modern 
 
 The cluster currently hosts the following production services:
 
-### 🔍 [search.calum.run](https://search.calum.run) - Search Engine
+### 🔍 [search.calum.sh](https://search.calum.sh) - Search Engine
 A full-featured search engine with user authentication and search history tracking.
 - **Repositories:** 
   - Backend: [ccrawford4/search](https://github.com/ccrawford4/search)
@@ -23,12 +23,12 @@ A full-featured search engine with user authentication and search history tracki
 - **Tech Stack:** Next.js frontend, Go backend, MySQL database, Redis cache
 - **Features:** OAuth authentication (GitHub, Google), search history, persistent storage
 
-### 👤 [about.calum.run](https://about.calum.run) - Portfolio Website
+### 👤 [about.calum.sh](https://about.calum.sh) - Portfolio Website
 Personal portfolio and about page.
 - **Repository:** [ccrawford4/portfolio-next](https://github.com/ccrawford4/portfolio-next)
 - **Tech Stack:** Next.js
 
-### 🚀 [argocd.calum.run](https://argocd.calum.run) - ArgoCD
+### 🚀 [argocd.calum.sh](https://argocd.calum.sh) - ArgoCD
 GitOps continuous delivery platform managing all applications in the cluster.
 - **Purpose:** Automated application deployment and lifecycle management
 - **Features:** Self-healing deployments, automated sync from Git, application health monitoring

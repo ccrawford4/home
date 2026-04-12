@@ -55,7 +55,7 @@ application-template:
                 name: search-app-secrets
                 key: nextauth-secret
           - name: NEXTAUTH_URL
-            value: "https://search.calum.run"
+            value: "https://search.calum.sh"
 
     - name: search-app-backend
       image:
