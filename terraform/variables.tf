@@ -46,3 +46,8 @@ variable "k8s_server_ip" {
   type        = string
   sensitive   = true
 }
+
+variable "cloudflare_zone_id" {
+  description = "The Cloudflare zone ID for the domain"
+  type        = string
+}

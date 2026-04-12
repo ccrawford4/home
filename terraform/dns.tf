@@ -1,8 +1,8 @@
 # Cloudflare Tunnel so the cluster can be exposed to the internet
 resource "cloudflare_zero_trust_tunnel_cloudflared" "master_tunnel" {
-  account_id = var.cloudflare_account_id
-  name       = "home.master"
-  config_src = "cloudflare"
+  account_id    = var.cloudflare_account_id
+  name          = "home.master"
+  config_src    = "cloudflare"
   tunnel_secret = var.cloudflare_tunnel_secret
 
   lifecycle {
@@ -39,4 +39,31 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config
       }
     ]
   }
+}
+
+resource "cloudflare_dns_record" "argocd" {
+  zone_id = var.cloudflare_zone_id
+  name    = "argocd"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
+  ttl     = 1
+  proxied = true
+}
+
+resource "cloudflare_dns_record" "search" {
+  zone_id = var.cloudflare_zone_id
+  name    = "search"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
+  ttl     = 1
+  proxied = true
+}
+
+resource "cloudflare_dns_record" "about" {
+  zone_id = var.cloudflare_zone_id
+  name    = "about"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
+  ttl     = 1
+  proxied = true
 }
