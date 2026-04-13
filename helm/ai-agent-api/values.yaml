@@ -21,7 +21,7 @@ application-template:
       image:
         repository: ccrawford4/ai-agent-api
         pullPolicy: IfNotPresent
-        tag: "v1.0.5"
+        tag: "v1.0.6"
         port: 8080
       service:
         enabled: true
