@@ -34,7 +34,8 @@ module "ai-agent-api-secrets" {
   secrets = [
     "ai-agent-api-chat-api-key",
     "ai-agent-api-kube-api-server",
-    "ai-agent-api-openai-api-key"
+    "ai-agent-api-openai-api-key",
+    "ai-agent-api-redis-password"
   ]
 
    google_service_account_id = "secrets-manager-sa"
