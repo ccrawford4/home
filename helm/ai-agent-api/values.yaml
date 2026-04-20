@@ -54,7 +54,6 @@ application-template:
                 key: redis-password
           - name: REDIS_URL
             value: "redis://:$(REDIS_PASSWORD)@ai-agent-api-redis:6379"
-
   secrets:
     - name: ai-agent-api-secrets
       data:
