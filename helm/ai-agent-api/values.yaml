@@ -50,7 +50,7 @@ application-template:
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: ai-agent-api-redis-secrets
+                name: ai-agent-api-secrets
                 key: redis-password
           - name: REDIS_URL
             value: "redis://:$(REDIS_PASSWORD)@ai-agent-api-redis:6379"
