@@ -21,7 +21,7 @@ application-template:
       image:
         repository: ccrawford4/ai-agent-api
         pullPolicy: IfNotPresent
-        tag: "v1.0.9"
+        tag: "v1.1.0"
         port: 8080
       service:
         enabled: true
@@ -47,13 +47,15 @@ application-template:
                 key: openai-api-key
           - name: PRODUCTION_MODE
             value: "true"
+          - name: REDIS_HOST
+            value: "ai-agent-api-redis"
+          - name: REDIS_PORT
+            value: "6379"
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: ai-agent-api-secrets
                 key: redis-password
-          - name: REDIS_URL
-            value: "redis://:$(REDIS_PASSWORD)@ai-agent-api-redis:6379"
   secrets:
     - name: ai-agent-api-secrets
       data:
