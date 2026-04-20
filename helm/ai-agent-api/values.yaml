@@ -63,6 +63,8 @@ application-template:
           remoteRefKey: ai-agent-api-kube-api-server
         - secretKey: openai-api-key
           remoteRefKey: ai-agent-api-openai-api-key
+        - secretKey: redis-password
+          remoteRefKey: ai-agent-api-redis-password
 redis:
   name: ai-agent-api-redis
   namespace: ai-agent-api
