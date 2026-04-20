@@ -47,6 +47,11 @@ application-template:
                 key: openai-api-key
           - name: PRODUCTION_MODE
             value: "true"
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: ai-agent-api-redis-secrets
+                key: redis-url
   secrets:
     - name: ai-agent-api-secrets
       data:
@@ -56,7 +61,6 @@ application-template:
           remoteRefKey: ai-agent-api-kube-api-server
         - secretKey: openai-api-key
           remoteRefKey: ai-agent-api-openai-api-key
-
 redis:
   name: ai-agent-api-redis
   namespace: ai-agent-api
