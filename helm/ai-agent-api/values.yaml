@@ -47,11 +47,14 @@ application-template:
                 key: openai-api-key
           - name: PRODUCTION_MODE
             value: "true"
-          - name: REDIS_URL
+          - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: ai-agent-api-redis-secrets
-                key: redis-url
+                key: redis-password
+          - name: REDIS_URL
+            value: "redis://:$(REDIS_PASSWORD)@ai-agent-api-redis:6379"
+
   secrets:
     - name: ai-agent-api-secrets
       data:
