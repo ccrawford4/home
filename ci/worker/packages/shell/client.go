@@ -2,10 +2,10 @@ package shell
 
 import "os/exec"
 
-func ExecuteCommand(cmd string) (string, error) {
-	output, err := exec.Command(cmd).Output()
+func ExecuteCommand(name string, args ...string) (string, error) {
+	output, err := exec.Command(name, args...).CombinedOutput()
 	if err != nil {
-		return "", err
+		return string(output), err
 	}
 	return string(output), nil
 }

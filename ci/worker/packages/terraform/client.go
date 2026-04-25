@@ -15,9 +15,8 @@ const (
 	PlanRoute TerraformRoute = "/terraform/plan"
 )
 
-func (tfClient *TerraformClient) Plan() {
-	cmd := "terraform plan -out=tfplan"
-	output, err := shell.ExecuteCommand(cmd)
+func (tfClient *TerraformClient) Plan(w http.ResponseWriter, r *http.Request) {
+	output, err := shell.ExecuteCommand("terraform", "plan", "-out=tfplan")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
