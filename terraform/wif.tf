@@ -9,13 +9,13 @@ resource "google_iam_workload_identity_pool_provider" "home_cluster_oidc_provide
   workload_identity_pool_provider_id = "home-cluster-oidc-provider"
   display_name                       = "Home Cluster OIDC Provider"
   description                        = "OIDC Provider for Home Kubernetes Cluster"
-  attribute_mapping                  = {
-    "google.subject"                 = "assertion.sub"
-    "attribute.ns"                   = "assertion['kubernetes.io/serviceaccount/namespace']"
-    "attribute.sa"                   = "assertion['kubernetes.io/serviceaccount/service-account.name']"
+  attribute_mapping = {
+    "google.subject" = "assertion.sub"
+    "attribute.ns"   = "assertion['kubernetes.io']['namespace']"
+    "attribute.sa"   = "assertion['kubernetes.io']['serviceaccount']['name']"
   }
   oidc {
-    issuer_uri        = var.k8s_issuer_uri
+    issuer_uri = var.k8s_issuer_uri
   }
 }
 
@@ -27,5 +27,5 @@ resource "google_service_account" "home_cluster_sa" {
 resource "google_service_account_iam_member" "workload_identity_binding" {
   service_account_id = google_service_account.home_cluster_sa.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.name}/attribute.ns/default/attribute.sa/nginx-example"
+  member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id}/subject/system:serviceaccount:portfolio:nginx-example"
 }
