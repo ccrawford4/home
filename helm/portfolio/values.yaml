@@ -29,6 +29,7 @@ application-template:
 
     - name: nginx
       replicaCount: 2
+      serviceAccount: nginx-example
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/nginx
         pullPolicy: IfNotPresent

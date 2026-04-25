@@ -16,6 +16,16 @@ resource "google_iam_workload_identity_pool_provider" "home_cluster_oidc_provide
   }
   oidc {
     issuer_uri        = var.k8s_issuer_uri
-    jwks_json         = file("cluster-jwks.json")
   }
+}
+
+resource "google_service_account" "home_cluster_sa" {
+  account_id   = "home-cluster-sa"
+  display_name = "Home Cluster Service Account"
+}
+
+resource "google_service_account_iam_member" "workload_identity_binding" {
+  service_account_id = google_service_account.home_cluster_sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.name}/attribute.ns/default/attribute.sa/nginx-example"
 }
