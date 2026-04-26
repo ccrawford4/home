@@ -27,7 +27,7 @@ namespaces:
 
   openid-server:
     rules:
-      - host: opend.calum.sh
+      - host: openid.calum.sh
         paths:
           - path: /
             pathType: Prefix
