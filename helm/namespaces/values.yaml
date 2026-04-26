@@ -6,3 +6,4 @@ namespaces:
   - name: mysql
   - name: portfolio
   - name: ai-agent-api
+  - name: openid-server
