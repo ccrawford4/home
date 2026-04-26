@@ -60,3 +60,21 @@ module "portfolio-secrets" {
   google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
+
+module "openid-server-secrets" {
+  source         = "./modules/secrets_core"
+  project_id     = var.project_id
+  project_number = var.project_number
+  region         = var.region
+
+  label               = "openid-server"
+  k8s_namespace       = "openid-server"
+  k8s_service_account = "secrets-manager-sa"
+  secrets = [
+    "openid-server-kubernetes-api-url",
+  ]
+
+  google_service_account_id    = "secrets-manager-sa"
+  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
+  workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
+}
