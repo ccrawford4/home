@@ -8,3 +8,4 @@ terraform.tfstate
 .credentials
 Chart.lock
 charts/
+openid-proxy

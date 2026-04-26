@@ -1,0 +1,40 @@
+application-template:
+  name: openid-server
+  namespace: openid-server
+  clusterSecretStoreName: cluster-secret-store
+  serviceAccount:
+    create: true
+    name: openid-server
+    clusterRole:
+      name: openid-server
+      rules:
+        - nonResourceURLs:
+            - "/.well-known/openid-configuration"
+            - "/openid/v1/jwks"
+          verbs: ["get"]
+    clusterRoleBinding:
+      name: openid-server
+  deployments:
+    - name: openid-server
+      image:
+        repository: ccrawford4/openid-server
+        pullPolicy: IfNotPresent
+        tag: "latest"
+        port: 8080
+      service:
+        enabled: true
+        port: 80
+        targetPort: 8080
+      replicaCount: 3
+      container:
+        env:
+          - name: KUBERNETES_API_URL
+            valueFrom:
+              secretKeyRef:
+                name: openid-server-secrets
+                key: kubernetes-api-url
+  secrets:
+    - name: openid-server-secrets
+      data:
+        - secretKey: kubernetes-api-url
+          remoteRefKey: openid-server-kubernetes-api-url
