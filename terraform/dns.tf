@@ -34,6 +34,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config
         service  = "http://${var.k8s_server_ip}"
       },
       {
+        hostname = "openid.calum.sh"
+        service  = "http://${var.k8s_server_ip}"
+      }
+      {
         # Catch-all rule (required as the last ingress rule)
         service = "http_status:404"
       }
