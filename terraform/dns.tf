@@ -71,3 +71,12 @@ resource "cloudflare_dns_record" "about" {
   ttl     = 1
   proxied = true
 }
+
+resource "cloudflare_dns_record" "openid" {
+  zone_id = var.cloudflare_zone_id
+  name    = "openid"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
+  ttl     = 1
+  proxied = true
+}
