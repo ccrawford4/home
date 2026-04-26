@@ -24,3 +24,12 @@ namespaces:
             pathType: Prefix
             serviceName: portfolio
             servicePort: 3000
+
+  openid-server:
+    rules:
+      - host: opend.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: openid-server
+            servicePort: 80
