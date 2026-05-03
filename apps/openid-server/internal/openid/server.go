@@ -7,15 +7,20 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"openid-proxy/internal/kubernetes"
 )
 
 const (
 	DiscoveryPath = "/.well-known/openid-configuration"
 	JWKSPath      = "/openid/v1/jwks"
+
+	AcceptJSON   = "application/json, */*"
+	AcceptJWKSet = "application/jwk-set+json, application/json, */*"
 )
 
 type RawGetter interface {
-	GetRaw(ctx context.Context, rawPath string) ([]byte, error)
+	GetRaw(ctx context.Context, req kubernetes.RawRequest) ([]byte, error)
 }
 
 type ServerOptions struct {
@@ -50,7 +55,10 @@ func (s *Server) Healthz(w http.ResponseWriter, _ *http.Request) {
 func (s *Server) Issuer(w http.ResponseWriter, r *http.Request) {
 	issuerURL := s.issuerURL(r)
 	if issuerURL == "" {
-		body, err := s.rawGetter.GetRaw(r.Context(), DiscoveryPath)
+		body, err := s.rawGetter.GetRaw(r.Context(), kubernetes.RawRequest{
+			Path:   DiscoveryPath,
+			Accept: AcceptJSON,
+		})
 		if err != nil {
 			writeError(w, err)
 			return
@@ -73,7 +81,10 @@ func (s *Server) Issuer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) Discovery(w http.ResponseWriter, r *http.Request) {
-	body, err := s.rawGetter.GetRaw(r.Context(), DiscoveryPath)
+	body, err := s.rawGetter.GetRaw(r.Context(), kubernetes.RawRequest{
+		Path:   DiscoveryPath,
+		Accept: AcceptJSON,
+	})
 	if err != nil {
 		writeError(w, err)
 		return
@@ -90,13 +101,16 @@ func (s *Server) Discovery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) JWKS(w http.ResponseWriter, r *http.Request) {
-	body, err := s.rawGetter.GetRaw(r.Context(), JWKSPath)
+	body, err := s.rawGetter.GetRaw(r.Context(), kubernetes.RawRequest{
+		Path:   JWKSPath,
+		Accept: AcceptJWKSet,
+	})
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/jwk-set+json")
 	_, _ = w.Write(body)
 }
 

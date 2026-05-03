@@ -21,6 +21,12 @@ type RawClientOptions struct {
 	HTTPClient   *http.Client
 }
 
+type RawRequest struct {
+	Path   string
+	Accept string
+	Header http.Header
+}
+
 type RawClient struct {
 	apiServerURL string
 	httpClient   *http.Client
@@ -46,16 +52,19 @@ func NewRawClient(options RawClientOptions) (*RawClient, error) {
 	}, nil
 }
 
-func (c *RawClient) GetRaw(ctx context.Context, rawPath string) ([]byte, error) {
+func (c *RawClient) GetRaw(ctx context.Context, rawReq RawRequest) ([]byte, error) {
 	apiURL, err := url.Parse(c.apiServerURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid Kubernetes API URL %q: %w", c.apiServerURL, err)
 	}
-	apiURL.Path = path.Join(apiURL.Path, rawPath)
+	apiURL.Path = path.Join(apiURL.Path, rawReq.Path)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+	if rawReq.Header != nil {
+		req.Header = rawReq.Header.Clone()
 	}
 
 	token, err := c.tokenSource.Token()
@@ -65,7 +74,9 @@ func (c *RawClient) GetRaw(ctx context.Context, rawPath string) ([]byte, error) 
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
-	req.Header.Set("Accept", "application/json")
+	if rawReq.Accept != "" {
+		req.Header.Set("Accept", rawReq.Accept)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -78,7 +89,7 @@ func (c *RawClient) GetRaw(ctx context.Context, rawPath string) ([]byte, error) 
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("Kubernetes API returned %s for %s: %s", resp.Status, rawPath, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("Kubernetes API returned %s for %s: %s", resp.Status, rawReq.Path, strings.TrimSpace(string(body)))
 	}
 
 	return body, nil

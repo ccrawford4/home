@@ -20,8 +20,11 @@ func TestRawClientGetRaw(t *testing.T) {
 			if got, want := r.Header.Get("Authorization"), "Bearer test-token"; got != want {
 				t.Fatalf("Authorization header = %q, want %q", got, want)
 			}
-			if got, want := r.Header.Get("Accept"), "application/json"; got != want {
+			if got, want := r.Header.Get("Accept"), "application/jwk-set+json, application/json, */*"; got != want {
 				t.Fatalf("Accept header = %q, want %q", got, want)
+			}
+			if got, want := r.Header.Get("X-Test-Header"), "test-value"; got != want {
+				t.Fatalf("X-Test-Header = %q, want %q", got, want)
 			}
 
 			return &http.Response{
@@ -36,7 +39,11 @@ func TestRawClientGetRaw(t *testing.T) {
 	}
 	client.tokenSource.tokenFile = tokenFile
 
-	body, err := client.GetRaw(context.Background(), "/openid/v1/jwks")
+	body, err := client.GetRaw(context.Background(), RawRequest{
+		Path:   "/openid/v1/jwks",
+		Accept: "application/jwk-set+json, application/json, */*",
+		Header: http.Header{"X-Test-Header": []string{"test-value"}},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

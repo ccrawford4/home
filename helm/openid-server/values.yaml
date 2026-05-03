@@ -19,7 +19,7 @@ application-template:
       image:
         repository: ccrawford4/openid-server
         pullPolicy: IfNotPresent
-        tag: "v1.0.0"
+        tag: "v1.1.0"
         port: 8080
       service:
         enabled: true
