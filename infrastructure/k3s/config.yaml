@@ -1,0 +1,3 @@
+kube-apiserver-arg:
+  - service-account-issuer=https://openid.calum.sh
+  - service-account-jwks-uri=https://openid.calum.sh/openid/v1/jwks
