@@ -22,7 +22,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := openid.NewServer(kubeClient)
+	server := openid.NewServer(kubeClient, openid.ServerOptions{
+		PublicIssuerURL: cfg.PublicIssuerURL,
+		JWKSJSON:        []byte(cfg.JWKSJSON),
+	})
 
 	log.Printf("serving Kubernetes OpenID proxy on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, server.Routes()))

@@ -11,8 +11,10 @@ const (
 )
 
 type Config struct {
-	Port         string
-	APIServerURL string
+	Port            string
+	APIServerURL    string
+	PublicIssuerURL string
+	JWKSJSON        string
 }
 
 func Load() (Config, error) {
@@ -22,8 +24,10 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Port:         env("PORT", defaultPort),
-		APIServerURL: apiServerURL,
+		Port:            env("PORT", defaultPort),
+		APIServerURL:    apiServerURL,
+		PublicIssuerURL: strings.TrimRight(os.Getenv("PUBLIC_ISSUER_URL"), "/"),
+		JWKSJSON:        os.Getenv("JWKS_JSON"),
 	}, nil
 }
 

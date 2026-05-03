@@ -13,13 +13,17 @@ kubectl get --raw /openid/v1/jwks
 
 - `GET /healthz` returns `204`
 - `GET /issuer` returns the issuer as plain text
-- `GET /.well-known/openid-configuration` returns the Kubernetes discovery document
-- `GET /openid/v1/jwks` returns the Kubernetes JWKS document
+- `GET /.well-known/openid-configuration` returns the discovery document, rewriting `issuer` and `jwks_uri` to the public issuer URL when configured
+- `GET /openid/v1/jwks` returns the configured JWKS document, or falls back to the Kubernetes JWKS document
 
 ## Configuration
 
 - `PORT`: listen port, default `8080`
-- `KUBERNETES_API_URL`: Kubernetes API server URL. If unset, the service uses in-cluster `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`.
+- `KUBERNETES_API_URL`: Kubernetes API server URL
+- `PUBLIC_ISSUER_URL`: optional public issuer base URL, for example `https://openid.calum.sh`. When set, discovery responses advertise `${PUBLIC_ISSUER_URL}/openid/v1/jwks` as `jwks_uri`
+- `JWKS_JSON`: optional raw JWKS JSON to serve from `GET /openid/v1/jwks`
+
+If `PUBLIC_ISSUER_URL` is unset, the service derives the issuer URL from the incoming request host and scheme.
 
 Kubernetes authentication uses the pod's mounted service account token and CA certificate from the standard in-cluster paths.
 
