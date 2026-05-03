@@ -35,15 +35,8 @@ application-template:
               secretKeyRef:
                 name: openid-server-secrets
                 key: kubernetes-api-url
-          - name: JWKS_JSON
-            valueFrom:
-              secretKeyRef:
-                name: openid-server-secrets
-                key: jwks-json
   secrets:
     - name: openid-server-secrets
       data:
         - secretKey: kubernetes-api-url
           remoteRefKey: openid-server-kubernetes-api-url
-        - secretKey: jwks-json
-          remoteRefKey: openid-server-jwks-json

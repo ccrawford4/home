@@ -20,20 +20,17 @@ type RawGetter interface {
 
 type ServerOptions struct {
 	PublicIssuerURL string
-	JWKSJSON        []byte
 }
 
 type Server struct {
 	rawGetter       RawGetter
 	publicIssuerURL string
-	jwksJSON        []byte
 }
 
 func NewServer(rawGetter RawGetter, options ServerOptions) *Server {
 	return &Server{
 		rawGetter:       rawGetter,
 		publicIssuerURL: strings.TrimRight(options.PublicIssuerURL, "/"),
-		jwksJSON:        options.JWKSJSON,
 	}
 }
 
@@ -93,14 +90,10 @@ func (s *Server) Discovery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) JWKS(w http.ResponseWriter, r *http.Request) {
-	body := s.jwksJSON
-	if len(body) == 0 {
-		var err error
-		body, err = s.rawGetter.GetRaw(r.Context(), JWKSPath)
-		if err != nil {
-			writeError(w, err)
-			return
-		}
+	body, err := s.rawGetter.GetRaw(r.Context(), JWKSPath)
+	if err != nil {
+		writeError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

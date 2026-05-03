@@ -24,7 +24,6 @@ func main() {
 
 	server := openid.NewServer(kubeClient, openid.ServerOptions{
 		PublicIssuerURL: cfg.PublicIssuerURL,
-		JWKSJSON:        []byte(cfg.JWKSJSON),
 	})
 
 	log.Printf("serving Kubernetes OpenID proxy on :%s", cfg.Port)

@@ -72,7 +72,6 @@ module "openid-server-secrets" {
   k8s_service_account = "secrets-manager-sa"
   secrets = [
     "openid-server-kubernetes-api-url",
-    "openid-server-jwks-json",
   ]
 
   google_service_account_id    = "secrets-manager-sa"

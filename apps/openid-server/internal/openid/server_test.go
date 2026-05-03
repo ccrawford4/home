@@ -68,10 +68,12 @@ func TestServerEndpoints(t *testing.T) {
 	})
 }
 
-func TestServerEndpointsWithOverrides(t *testing.T) {
-	server := NewServer(&fakeRawGetter{}, ServerOptions{
+func TestServerEndpointsWithPublicIssuerOverride(t *testing.T) {
+	server := NewServer(&fakeRawGetter{responses: map[string][]byte{
+		DiscoveryPath: []byte(`{"issuer":"https://kubernetes.default.svc","jwks_uri":"https://kubernetes.default.svc/openid/v1/jwks"}`),
+		JWKSPath:      []byte(`{"keys":[{"kid":"cluster"}]}`),
+	}}, ServerOptions{
 		PublicIssuerURL: "https://openid.calum.sh/",
-		JWKSJSON:        []byte(`{"keys":[{"kid":"cluster"}]}`),
 	})
 
 	t.Run("issuer", func(t *testing.T) {
