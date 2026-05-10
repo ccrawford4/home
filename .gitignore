@@ -9,3 +9,5 @@ terraform.tfstate
 Chart.lock
 charts/
 openid-proxy
+test_request.sh
+example_request.json
