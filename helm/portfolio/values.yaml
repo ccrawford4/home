@@ -26,6 +26,17 @@ application-template:
                 key: chat-api-key
           - name: CHAT_API_URL
             value: "http://ai-agent-api.ai-agent-api.svc.cluster.local/chat"
+        volumeMounts:
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
+      volumes:
+        - name: gcp-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+                  expirationSeconds: 3600
+                  path: token
 
     - name: nginx
       replicaCount: 2
