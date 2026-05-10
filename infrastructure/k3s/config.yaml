@@ -1,3 +1,8 @@
 kube-apiserver-arg:
   - service-account-issuer=https://openid.calum.sh
   - service-account-jwks-uri=https://openid.calum.sh/openid/v1/jwks
+
+kubelet-arg:
+  - "image-credential-provider-config=/etc/rancher/k3s/credential-provider-config.yaml"
+  - "image-credential-provider-bin-dir=/var/lib/rancher/gcp-credential-provider/bin"
+  - "feature-gates=KubeletServiceAccountTokenForCredentialProviders=true"
