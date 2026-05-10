@@ -39,6 +39,9 @@ application-template:
         enabled: true
         port: 80
 
+    #  TODO: add a volume here to moun the serviceAccountToken for the audience "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+
+
   secrets:
     - name: portfolio-secrets
       data:
