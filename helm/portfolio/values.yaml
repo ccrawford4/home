@@ -43,7 +43,7 @@ application-template:
       serviceAccount: nginx-example
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/nginx
-        pullPolicy: IfNotPresent
+        pullPolicy: Always
         tag: "latest"
         port: 80
       service:
