@@ -31,12 +31,14 @@ var (
 )
 
 type config struct {
-	imagePrefix string
-	registry    string
-	stsTokenURL string
-	stsAudience string
-	stsScope    string
-	userAgent   string
+	imagePrefix           string
+	registry              string
+	stsTokenURL           string
+	stsAudience           string
+	stsScope              string
+	userAgent             string
+	serviceAccountEmail   string
+	iamCredentialsBaseURL string
 }
 
 type stsTokenResponse struct {
@@ -102,6 +104,13 @@ func loadConfig() (*config, error) {
 	}
 	logger.DebugContext(context.Background(), "loaded STS_AUDIENCE")
 
+	serviceAccountEmail, err := requiredEnv("SERVICE_ACCOUNT_EMAIL")
+	if err != nil {
+		logger.ErrorContext(context.Background(), "missing required config", "env_var", "SERVICE_ACCOUNT_EMAIL", "error", err)
+		return nil, err
+	}
+	logger.DebugContext(context.Background(), "loaded SERVICE_ACCOUNT_EMAIL")
+
 	logger.DebugContext(context.Background(), "loading optional environment variables")
 	registry := envOrDefault("GAR_REGISTRY_HOST", registryFromImagePrefix(imagePrefix))
 	if registry == "" {
@@ -112,15 +121,17 @@ func loadConfig() (*config, error) {
 	logger.DebugContext(context.Background(), "resolved registry", "registry", registry)
 
 	cfg := &config{
-		imagePrefix: imagePrefix,
-		registry:    registry,
-		stsTokenURL: envOrDefault("STS_TOKEN_URL", defaultSTSTokenURL),
-		stsAudience: stsAudience,
-		stsScope:    envOrDefault("STS_SCOPE", defaultSTSScope),
-		userAgent:   envOrDefault("STS_USER_AGENT", defaultUserAgent),
+		imagePrefix:           imagePrefix,
+		registry:              registry,
+		stsTokenURL:           envOrDefault("STS_TOKEN_URL", defaultSTSTokenURL),
+		stsAudience:           stsAudience,
+		stsScope:              envOrDefault("STS_SCOPE", defaultSTSScope),
+		userAgent:             envOrDefault("STS_USER_AGENT", defaultUserAgent),
+		serviceAccountEmail:   serviceAccountEmail,
+		iamCredentialsBaseURL: envOrDefault("IAM_CREDENTIALS_BASE_URL", "https://iamcredentials.googleapis.com/v1"),
 	}
 
-	logger.InfoContext(context.Background(), "config loaded", "registry", cfg.registry, "stsTokenURL", cfg.stsTokenURL)
+	logger.InfoContext(context.Background(), "config loaded", "registry", cfg.registry, "stsTokenURL", cfg.stsTokenURL, "serviceAccountEmail", cfg.serviceAccountEmail)
 	return cfg, nil
 }
 
@@ -197,6 +208,62 @@ func requestSTSToken(cfg *config, subjectToken string) (*stsTokenResponse, error
 	return &tokenResponse, nil
 }
 
+func impersonateServiceAccount(cfg *config, stsToken string) (*generateAccessTokenResponse, error) {
+	logger.DebugContext(context.Background(), "preparing service account impersonation request", "serviceAccount", cfg.serviceAccountEmail)
+
+	requestBody := &generateAccessTokenRequest{
+		Scope: []string{defaultSTSScope},
+	}
+
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		logger.ErrorContext(context.Background(), "failed to marshal impersonation request", "error", err)
+		return nil, fmt.Errorf("failed to marshal impersonation request: %w", err)
+	}
+
+	iamURL := fmt.Sprintf("%s/projects/-/serviceAccounts/%s:generateAccessToken", cfg.iamCredentialsBaseURL, cfg.serviceAccountEmail)
+	httpRequest, err := http.NewRequest(http.MethodPost, iamURL, strings.NewReader(string(bodyBytes)))
+	if err != nil {
+		logger.ErrorContext(context.Background(), "failed to create impersonation request", "url", iamURL, "error", err)
+		return nil, fmt.Errorf("failed to create impersonation request: %w", err)
+	}
+
+	httpRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", stsToken))
+	httpRequest.Header.Set("User-Agent", cfg.userAgent)
+	httpRequest.Header.Set("Accept", "application/json")
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	logger.InfoContext(context.Background(), "sending request to IAM Credentials API", "url", iamURL)
+	httpResponse, err := stsHTTPClient.Do(httpRequest)
+	if err != nil {
+		logger.ErrorContext(context.Background(), "failed to call IAM Credentials API", "url", iamURL, "error", err)
+		return nil, fmt.Errorf("failed to call IAM Credentials API: %w", err)
+	}
+	defer httpResponse.Body.Close()
+
+	var iamResponse generateAccessTokenResponse
+	if err := json.NewDecoder(httpResponse.Body).Decode(&iamResponse); err != nil {
+		logger.ErrorContext(context.Background(), "failed to decode IAM Credentials response", "status", httpResponse.Status, "error", err)
+		return nil, fmt.Errorf("failed to decode IAM Credentials response: %w", err)
+	}
+
+	logger.InfoContext(context.Background(), "received response from IAM Credentials API", "status", httpResponse.Status, "statusCode", httpResponse.StatusCode)
+
+	if httpResponse.StatusCode < 200 || httpResponse.StatusCode >= 300 {
+		logger.ErrorContext(context.Background(), "IAM Credentials API non-2xx response", "status", httpResponse.Status)
+		return nil, fmt.Errorf("IAM Credentials API returned %s", httpResponse.Status)
+	}
+
+	if iamResponse.AccessToken == "" {
+		err := fmt.Errorf("IAM Credentials API response did not include accessToken")
+		logger.ErrorContext(context.Background(), "missing access token in response", "error", err)
+		return nil, err
+	}
+
+	logger.InfoContext(context.Background(), "successfully obtained impersonated access token", "expireTime", iamResponse.ExpireTime)
+	return &iamResponse, nil
+}
+
 func cacheDuration(tokenResponse *stsTokenResponse) string {
 	if tokenResponse.ExpiresIn <= 60 {
 		return ""
@@ -219,7 +286,13 @@ func generateCredentialProviderResponse(request *CredentialProviderRequest, cfg 
 	}
 
 	logger.InfoContext(context.Background(), "requesting STS token")
-	tokenResponse, err := requestSTSToken(cfg, subjectToken)
+	stsTokenResponse, err := requestSTSToken(cfg, subjectToken)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.InfoContext(context.Background(), "impersonating service account")
+	iamTokenResponse, err := impersonateServiceAccount(cfg, stsTokenResponse.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -234,11 +307,11 @@ func generateCredentialProviderResponse(request *CredentialProviderRequest, cfg 
 		APIVersion:    apiVersion,
 		Kind:          "CredentialProviderResponse",
 		CacheKeyType:  PluginCacheKeyTypeImage,
-		CacheDuration: cacheDuration(tokenResponse),
+		CacheDuration: cacheDuration(stsTokenResponse),
 		Auth: map[string]AuthConfig{
 			cfg.registry: {
 				Username: dockerAccessTokenUsername,
-				Password: tokenResponse.AccessToken,
+				Password: iamTokenResponse.AccessToken,
 			},
 		},
 	}

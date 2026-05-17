@@ -27,3 +27,12 @@ type CredentialProviderResponse struct {
 	CacheDuration string                `json:"cacheDuration,omitempty"`
 	Auth          map[string]AuthConfig `json:"auth"`
 }
+
+type generateAccessTokenRequest struct {
+	Scope []string `json:"scope"`
+}
+
+type generateAccessTokenResponse struct {
+	AccessToken string `json:"accessToken"`
+	ExpireTime  string `json:"expireTime"`
+}
