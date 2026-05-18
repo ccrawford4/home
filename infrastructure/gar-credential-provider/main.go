@@ -52,6 +52,32 @@ type stsTokenResponse struct {
 	ErrorDescription string `json:"error_description"`
 }
 
+type googleAPIErrorResponse struct {
+	Error struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	} `json:"error"`
+}
+
+func configureLogger() func() {
+	logFile := os.Getenv("GCP_CREDENTIAL_PROVIDER_LOG_FILE")
+	if logFile == "" {
+		return func() {}
+	}
+
+	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		logger.ErrorContext(context.Background(), "failed to open log file", "path", logFile, "error", err)
+		return func() {}
+	}
+
+	logger = slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stderr, file), nil))
+	return func() {
+		_ = file.Close()
+	}
+}
+
 func parseCredentialProviderRequest(stdin io.Reader) (*CredentialProviderRequest, error) {
 	var request CredentialProviderRequest
 
@@ -60,7 +86,7 @@ func parseCredentialProviderRequest(stdin io.Reader) (*CredentialProviderRequest
 		return nil, fmt.Errorf("failed to decode credential provider request: %w", err)
 	}
 
-	logger.DebugContext(context.Background(), "parsed credential provider request", "image", request.Image, "apiVersion", request.APIVersion)
+	logger.InfoContext(context.Background(), "parsed credential provider request", "image", request.Image, "apiVersion", request.APIVersion, "hasServiceAccountToken", request.ServiceAccountToken != "", "serviceAccountAnnotationCount", len(request.ServiceAccountAnnotations))
 	return &request, nil
 
 }
@@ -241,8 +267,14 @@ func impersonateServiceAccount(cfg *config, stsToken string) (*generateAccessTok
 	}
 	defer httpResponse.Body.Close()
 
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		logger.ErrorContext(context.Background(), "failed to read IAM Credentials response", "status", httpResponse.Status, "error", err)
+		return nil, fmt.Errorf("failed to read IAM Credentials response: %w", err)
+	}
+
 	var iamResponse generateAccessTokenResponse
-	if err := json.NewDecoder(httpResponse.Body).Decode(&iamResponse); err != nil {
+	if err := json.Unmarshal(responseBody, &iamResponse); err != nil {
 		logger.ErrorContext(context.Background(), "failed to decode IAM Credentials response", "status", httpResponse.Status, "error", err)
 		return nil, fmt.Errorf("failed to decode IAM Credentials response: %w", err)
 	}
@@ -250,7 +282,13 @@ func impersonateServiceAccount(cfg *config, stsToken string) (*generateAccessTok
 	logger.InfoContext(context.Background(), "received response from IAM Credentials API", "status", httpResponse.Status, "statusCode", httpResponse.StatusCode)
 
 	if httpResponse.StatusCode < 200 || httpResponse.StatusCode >= 300 {
-		logger.ErrorContext(context.Background(), "IAM Credentials API non-2xx response", "status", httpResponse.Status)
+		var apiError googleAPIErrorResponse
+		if err := json.Unmarshal(responseBody, &apiError); err == nil && apiError.Error.Message != "" {
+			logger.ErrorContext(context.Background(), "IAM Credentials API error response", "status", httpResponse.Status, "code", apiError.Error.Code, "apiStatus", apiError.Error.Status, "message", apiError.Error.Message)
+			return nil, fmt.Errorf("IAM Credentials API returned %s: %s: %s", httpResponse.Status, apiError.Error.Status, apiError.Error.Message)
+		}
+
+		logger.ErrorContext(context.Background(), "IAM Credentials API non-2xx response", "status", httpResponse.Status, "body", string(responseBody))
 		return nil, fmt.Errorf("IAM Credentials API returned %s", httpResponse.Status)
 	}
 
@@ -322,6 +360,8 @@ func generateCredentialProviderResponse(request *CredentialProviderRequest, cfg 
 
 func main() {
 	ctx := context.Background()
+	cleanupLogger := configureLogger()
+	defer cleanupLogger()
 
 	logger.InfoContext(ctx, "credential provider starting")
 
