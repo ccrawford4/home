@@ -11,3 +11,4 @@ charts/
 openid-proxy
 test_request.sh
 example_request.json
+infrastructure/gar-credential-provider/gcp-credential-provider
