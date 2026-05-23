@@ -33,3 +33,11 @@ namespaces:
             pathType: Prefix
             serviceName: openid-server
             servicePort: 80
+  ollama:
+    rules:
+      - host: ollama.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: ollama
+            servicePort: 11434
