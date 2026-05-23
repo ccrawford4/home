@@ -7,3 +7,4 @@ namespaces:
   - name: portfolio
   - name: ai-agent-api
   - name: openid-server
+  - name: ollama

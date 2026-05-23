@@ -44,7 +44,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 # -- String to fully override namespace
-namespaceOverride: ""
+namespaceOverride: "ollama"
 
 # Ollama parameters
 ollama:
