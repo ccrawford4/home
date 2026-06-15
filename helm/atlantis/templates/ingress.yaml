@@ -1,0 +1,82 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "atlantis.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $pathType := .Values.ingress.pathType -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "atlantis.labels" . | nindent 4 }}
+    {{- if .Values.ingress.labels }}
+    {{- toYaml .Values.ingress.labels | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.ingress.annotations .Values.extraAnnotations }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.extraAnnotations }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if not .Values.ingress.hosts }}
+    -
+      {{- if .Values.ingress.host }}
+      host: {{ .Values.ingress.host | quote }}
+      {{- end }}
+      http:
+        paths:
+        {{- if .Values.ingress.paths }}
+          {{- range .Values.ingress.paths }}
+          - path: {{ .path }}
+            pathType: {{ $.Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .service }}
+                port:
+                  number: {{ .port }}
+          {{- end }}
+        {{ else }}
+          - path: {{ .Values.ingress.path }}
+            pathType: {{ .Values.ingress.pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ .Values.service.port }}
+        {{- end }}
+    {{ else }}
+    {{- range $k := .Values.ingress.hosts }}
+    -
+      {{- if .host }}
+      host: {{ .host | quote }}
+      {{- end }}
+      http:
+        paths:
+        {{- range .paths }}
+          - path: {{ . }}
+            pathType: {{ $pathType }}
+            backend:
+              service:
+                {{- if $k.service }}
+                name: {{ $k.service }}
+                {{- else }}
+                name: {{ $fullName }}
+                {{- end }}
+                port:
+                  number: {{ $svcPort }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end }}
