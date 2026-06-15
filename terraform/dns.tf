@@ -47,7 +47,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config
       },
       {
         hostname = "k8s.calum.sh"
-        service  = "http://${var.k8s_server_ip}"
+        service  = "http://127.0.0.1:8000"
       },
       {
         # Catch-all rule (required as the last ingress rule)
