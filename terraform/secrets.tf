@@ -92,6 +92,8 @@ module "atlantis-secrets" {
   secrets = [
     "atlantis-github-token",
     "atlantis-github-webhook-secret",
+    "atlantis-github-app-id",
+    "atlantis-gitub-app-key"
   ]
 
   google_service_account_id    = "secrets-manager-sa"

@@ -373,6 +373,12 @@ spec:
           {{- if .Values.githubApp.id }}
           - name: ATLANTIS_GH_APP_ID
             value: {{ .Values.githubApp.id | quote}}
+          {{- else if .Values.vcsSecretName }}
+          - name: ATLANTIS_GH_APP_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "atlantis.vcsSecretName" . }}
+                key: app-id
           {{- end }}
           {{- if .Values.githubApp.installationId }}
           - name: ATLANTIS_GH_APP_INSTALLATION_ID

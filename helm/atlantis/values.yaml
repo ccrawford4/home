@@ -26,17 +26,20 @@ logLevel: ""
 # The 'org' key is used to restrict which GitHub org Atlantis will respond to.
 # Check values.yaml for examples.
 github:
-  user: "8vvbcmsr8r-design!"
+  user: ""
   token: ""
   secret: ""
 clusterSecretStoreName: cluster-secret-store
 secrets:
   - name: atlantis-vcs-secret
     data:
-      - secretKey: github_token
-        remoteRefKey: atlantis-github-token
       - secretKey: github_secret
         remoteRefKey: atlantis-github-webhook-secret
+      - secretKey: app-id
+        remoteRefKey: atlantis-github-app-id
+      - secretKey: key.pem
+        remoteRefKey: atlantis-github-app-key
+
 # github:
 #   user: foo
 #   token: bar
@@ -48,7 +51,10 @@ secrets:
 # The chart will perform the base64 encoding for you for values that are stored in secrets.
 # installationId is necessary when there are multiple installs of the Github App.
 # Check values.yaml for examples.
-githubApp: {}
+githubApp:
+  id: ""
+  key: ""
+
 # githubApp:
 #   id: 123456
 #   installationId: 1
