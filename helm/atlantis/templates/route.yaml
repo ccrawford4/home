@@ -1,5 +1,5 @@
 {{- $fullName := include "atlantis.fullname" . }}
-{{- $namespace := .Release.Namespace -}}
+{{- $namespace := include "atlantis.namespace" . -}}
 {{- range $name, $route := .Values.route }}
 {{- if $route.enabled }}
 ---

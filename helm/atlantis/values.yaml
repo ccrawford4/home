@@ -5,6 +5,8 @@
 fullnameOverride: ""
 # -- Provide a name to substitute for the name of the chart.
 nameOverride: ""
+# -- Namespace for generated Atlantis resources.
+namespace: atlantis
 # -- An option to override the atlantis url,
 # if not using an ingress, set it to the external IP.
 # Check values.yaml for examples.

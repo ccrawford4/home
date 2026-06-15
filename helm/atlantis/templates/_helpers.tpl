@@ -57,7 +57,14 @@ http
 Defines the internal kubernetes address to Atlantis
 */}}
 {{- define "atlantis.url" -}}
-{{ template "atlantis.url.scheme" . }}://{{ template "atlantis.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+{{ template "atlantis.url.scheme" . }}://{{ template "atlantis.fullname" . }}.{{ include "atlantis.namespace" . }}.svc.cluster.local:{{ .Values.service.port }}
+{{- end -}}
+
+{{/*
+Define the namespace used for namespaced resources.
+*/}}
+{{- define "atlantis.namespace" -}}
+{{- default .Release.Namespace .Values.namespace -}}
 {{- end -}}
 
 {{/*

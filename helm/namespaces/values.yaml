@@ -8,3 +8,4 @@ namespaces:
   - name: ai-agent-api
   - name: openid-server
   - name: ollama
+  - name: atlantis
