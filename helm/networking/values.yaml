@@ -49,4 +49,4 @@ namespaces:
           - path: /
             pathType: Prefix
             serviceName: atlantis
-            servicePort: 4141
+            servicePort: 80
