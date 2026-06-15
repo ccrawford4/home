@@ -32,9 +32,9 @@ secrets:
   - name: atlantis-vcs-secret
     data:
       - secretKey: github_token
-        remoteRefKey: github-token
+        remoteRefKey: atlantis-github-token
       - secretKey: github_secret
-        remoteRefKey: github-webhook-secret
+        remoteRefKey: atlantis-github-webhook-secret
 # github:
 #   user: foo
 #   token: bar
