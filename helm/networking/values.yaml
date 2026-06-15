@@ -41,3 +41,12 @@ namespaces:
             pathType: Prefix
             serviceName: ollama
             servicePort: 11434
+
+  atlantis:
+    rules:
+      - host: atlantis.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: atlantis
+            servicePort: 4141
