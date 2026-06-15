@@ -39,7 +39,8 @@ secrets:
         remoteRefKey: atlantis-github-app-id
       - secretKey: key.pem
         remoteRefKey: atlantis-github-app-key
-
+      - secretKey: github_token
+        remoteRefKey: atlantis-github-token
 # github:
 #   user: foo
 #   token: bar
@@ -54,7 +55,6 @@ secrets:
 githubApp:
   id: ""
   key: ""
-
 # githubApp:
 #   id: 123456
 #   installationId: 1
