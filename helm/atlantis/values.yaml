@@ -14,11 +14,7 @@ atlantisUrl: ""
 # Example:  http://10.0.0.0
 
 # -- Replace this with your own repo allowlist.
-<<<<<<< HEAD
 orgAllowlist: "github.com/ccrawford4/home"
-=======
-orgAllowlist: "github.com/ccrawford4/*"
->>>>>>> 466b001 ([NO-TICKET] update org allowlist)
 # -- Deprecated in favor of orgAllowlist.
 orgWhitelist: "<deprecated>"
 # -- Specify the log level for Atlantis.
