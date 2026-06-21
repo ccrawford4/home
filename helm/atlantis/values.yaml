@@ -610,14 +610,23 @@ googleServiceAccountSecrets: []
 
 # -- Optionally specify additional volumes for the pod.
 # Check values.yaml for examples.
-extraVolumes: []
+extraVolumes:
+  - name: gcp-sa-token
+    projected:
+      sources:
+        - serviceAccountToken:
+            audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+            expirationSeconds: 3600
+            path: token
 # extraVolumes:
 #   - name: some-volume-name
 #     emptyDir: {}
 
 # -- Optionally specify additional volume mounts for the container.
 # Check values.yaml for examples.
-extraVolumeMounts: []
+extraVolumeMounts:
+  - name: gcp-sa-token
+    mountPath: /var/run/secrets/workload-identity-federation
 # extraVolumeMounts:
 #   - name: some-volume-name
 #     mountPath: /path/in/container
