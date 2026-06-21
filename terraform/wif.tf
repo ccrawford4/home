@@ -31,8 +31,14 @@ resource "google_service_account_iam_member" "workload_identity_binding" {
 }
 
 resource "google_artifact_registry_repository_iam_member" "internal_reader" {
-  location = google_artifact_registry_repository.internal.location
+  location   = google_artifact_registry_repository.internal.location
   repository = google_artifact_registry_repository.internal.name
-  role   = "roles/artifactregistry.reader"
-  member = "serviceAccount:${google_service_account.home_cluster_sa.email}"
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:${google_service_account.home_cluster_sa.email}"
+}
+
+resource "google_service_account_iam_member" "workload_identity_binding_atlantis" {
+  service_account_id = google_service_account.home_cluster_sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id}/subject/system:serviceaccount:atlantis:atlantis"
 }
