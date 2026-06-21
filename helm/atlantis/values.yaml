@@ -533,43 +533,43 @@ environment: {}
 environmentSecrets:
   - name: TF_VAR_project_id
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: project_id
   - name: TF_VAR_project_number
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: project_number
   - name: TF_VAR_k8s_issuer_uri
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: k8s_issuer_uri
   - name: TF_VAR_region
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: region
   - name: TF_VAR_cloudflare_api_token
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: cloudflare_api_token
   - name: TF_VAR_cloudflare_account_id
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: cloudflare_account_id
   - name: TF_VAR_cloudflare_tunnel_secret
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: cloudflare_tunnel_secret
   - name: TF_VAR_cloudflare_email
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: cloudflare_email
   - name: TF_VAR_k8s_server_ip
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: k8s_server_ip
   - name: cloudflare_zone_id
     secretKeyRef:
-      name: atlantis-tfvars-secret
+      name: atlantis-vcs-secret
       key: cloudflare_zone_id
 # -- Optionally specify additional environment variables in raw yaml format.
 # Useful to specify variables refering to k8s objects.
