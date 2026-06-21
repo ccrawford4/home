@@ -41,6 +41,28 @@ secrets:
         remoteRefKey: atlantis-github-app-key
       - secretKey: github_token
         remoteRefKey: atlantis-github-token
+  - name: atlantis-tfvars-secret
+    data:
+      - secretKey: project_id
+        remoteRefKey: atlantis-gcp-project-id
+      - secretKey: project_number
+        remoteRefKey: atlantis-gcp-project-number
+      - secretKey: k8s_issuer_uri
+        remoteRefKey: atlantis-k8s-issuer-uri
+      - secretKey: region
+        remoteRefKey: atlantis-region
+      - secretKey: cloudflare_api_token
+        remoteRefKey: atlantis-cloudflare-api-token
+      - secretKey: cloudflare_account_id
+        remoteRefKey: atlantis-cloudflare-account-id
+      - secretKey: cloudflare_tunnel_secret
+        remoteRefKey: atlantis-cloudflare-tunnel-secret
+      - secretKey: cloudflare_email
+        remoteRefKey: atlantis-cloudflare-email
+      - secretKey: k8s_server_ip
+        remoteRefKey: atlantis-k8s-server-ip
+      - secretKey: cloudflare_zone_id
+        remoteRefKey: atlantis-cloudflare-zone-id
 # github:
 #   user: foo
 #   token: bar
@@ -510,14 +532,47 @@ environment: {}
 
 # -- Optionally specify additional environment variables to be populated from Kubernetes secrets.
 # Useful for passing in TF_VAR_foo or other secret environment variables from Kubernetes secrets.
-# Check values.yaml for examples.
-environmentSecrets: []
-# environmentSecrets:
-#   - name: THE_ENV_VAR
-#     secretKeyRef:
-#       name: the_k8s_secret_name
-#       key: the_key_of_the_value_in_the_secret
-
+environmentSecrets:
+  - name: TF_VAR_project_id
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: project_id
+  - name: TF_VAR_project_number
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: project_number
+  - name: TF_VAR_k8s_issuer_uri
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: k8s_issuer_uri
+  - name: TF_VAR_region
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: region
+  - name: TF_VAR_cloudflare_api_token
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: cloudflare_api_token
+  - name: TF_VAR_cloudflare_account_id
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: cloudflare_account_id
+  - name: TF_VAR_cloudflare_tunnel_secret
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: cloudflare_tunnel_secret
+  - name: TF_VAR_cloudflare_email
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: cloudflare_email
+  - name: TF_VAR_k8s_server_ip
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: k8s_server_ip
+  - name: cloudflare_zone_id
+    secretKeyRef:
+      name: atlantis-tfvars-secret
+      key: cloudflare_zone_id
 # -- Optionally specify additional environment variables in raw yaml format.
 # Useful to specify variables refering to k8s objects.
 # Check values.yaml for examples.

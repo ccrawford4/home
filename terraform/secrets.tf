@@ -90,10 +90,23 @@ module "atlantis-secrets" {
   k8s_namespace       = "atlantis"
   k8s_service_account = "secrets-manager-sa"
   secrets = [
+    # GitHub webhook secrets
     "atlantis-github-token",
     "atlantis-github-webhook-secret",
     "atlantis-github-app-id",
-    "atlantis-github-app-key"
+    "atlantis-github-app-key",
+
+    # Tf vars
+    "atlantis-gcp-project-id",
+    "atlantis-gcp-project-number",
+    "atlantis-k8s-issuer-uri",
+    "atlantis-region",
+    "atlantis-cloudflare-api-token",
+    "atlantis-cloudflare-account-id",
+    "atlantis-cloudflare-tunnel-secret",
+    "atlantis-cloudflare-email",
+    "atlantis-k8s-server-ip",
+    "atlantis-cloudflare-zone-id",
   ]
 
   google_service_account_id    = "secrets-manager-sa"
