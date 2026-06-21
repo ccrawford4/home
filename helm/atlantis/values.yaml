@@ -531,6 +531,8 @@ environment: {}
 # -- Optionally specify additional environment variables to be populated from Kubernetes secrets.
 # Useful for passing in TF_VAR_foo or other secret environment variables from Kubernetes secrets.
 environmentSecrets:
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /var/run/secrets/workload-identity-federation
   - name: TF_VAR_project_id
     secretKeyRef:
       name: atlantis-vcs-secret
