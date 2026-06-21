@@ -46,3 +46,8 @@ resource "google_storage_bucket" "terraform_state_bucket" {
     }
   }
 }
+
+resource "google_storage_bucket" "example_bucket" {
+  name     = "example-bucket-terraform-1"
+  location = var.region
+}

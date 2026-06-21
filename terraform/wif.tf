@@ -42,3 +42,9 @@ resource "google_service_account_iam_member" "workload_identity_binding_atlantis
   role               = "roles/iam.workloadIdentityUser"
   member             = "principal://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id}/subject/system:serviceaccount:atlantis:atlantis"
 }
+
+resource "google_storage_bucket_iam_member" "atlantis_write_tf_state" {
+  bucket = "tf-state-home-prod"
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${google_service_account.home_cluster_sa.email}"
+}
