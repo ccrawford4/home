@@ -41,8 +41,6 @@ secrets:
         remoteRefKey: atlantis-github-app-key
       - secretKey: github_token
         remoteRefKey: atlantis-github-token
-  - name: atlantis-tfvars-secret
-    data:
       - secretKey: project_id
         remoteRefKey: atlantis-gcp-project-id
       - secretKey: project_number
