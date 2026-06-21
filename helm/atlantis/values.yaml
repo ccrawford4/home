@@ -525,7 +525,7 @@ extraPath: ""
 # -- Environment values to add to the Atlantis pod.
 # Check values.yaml for examples.
 environment:
-  GOOGLE_APPLICATION_CREDENTIALS: /var/run/secrets/workload-identity-federation
+  GOOGLE_APPLICATION_CREDENTIALS: /etc/gcp/gcp-wif-config.json
 # environment:
 #   ATLANTIS_DEFAULT_TF_VERSION: v1.2.9
 
@@ -619,7 +619,10 @@ extraVolumes:
             audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
             expirationSeconds: 3600
             path: token
-# extraVolumes:
+  - name: gcp-wif-volume
+    configMap:
+      name: atlantis-gcp-wif-config
+      # extraVolumes:
 #   - name: some-volume-name
 #     emptyDir: {}
 
@@ -628,6 +631,10 @@ extraVolumes:
 extraVolumeMounts:
   - name: gcp-sa-token
     mountPath: /var/run/secrets/workload-identity-federation
+    readOnly: true
+  - name: gcp-wif-volume
+    mountPath: /etc/gcp
+    readOnly: true
 # extraVolumeMounts:
 #   - name: some-volume-name
 #     mountPath: /path/in/container
