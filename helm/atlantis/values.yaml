@@ -567,7 +567,7 @@ environmentSecrets:
     secretKeyRef:
       name: atlantis-vcs-secret
       key: k8s_server_ip
-  - name: cloudflare_zone_id
+  - name: TF_VAR_cloudflare_zone_id
     secretKeyRef:
       name: atlantis-vcs-secret
       key: cloudflare_zone_id
