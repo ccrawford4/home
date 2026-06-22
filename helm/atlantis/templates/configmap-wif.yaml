@@ -13,5 +13,5 @@ data:
       "credential_source": {
         "file": "/var/run/secrets/workload-identity-federation/token"
       },
-      "service_account_impersonation_url": "https://googleapis.com"
+     "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/home-cluster-sa@home-473419.iam.gserviceaccount.com:generateAccessToken"
     }
