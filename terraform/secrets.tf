@@ -6,7 +6,7 @@ module "search-app-secrets" {
 
   label               = "search-app"
   k8s_namespace       = "search-app"
-  k8s_service_account = "secrets-manager-sa"
+  k8s_service_account = var.secrets_manager_sa_id
   secrets = [
     "search-app-db-username",
     "search-app-db-password",
@@ -18,7 +18,7 @@ module "search-app-secrets" {
     "search-app-google-id",
     "search-app-google-secret",
   ]
-  google_service_account_id = "secrets-manager-sa"
+  google_service_account_id = var.secrets_manager_sa_id
   workload_identity_pool_id = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
 
@@ -30,7 +30,7 @@ module "ai-agent-api-secrets" {
 
   label               = "ai-agent-api"
   k8s_namespace       = "ai-agent-api"
-  k8s_service_account = "secrets-manager-sa"
+  k8s_service_account = var.secrets_manager_sa_id
   secrets = [
     "ai-agent-api-chat-api-key",
     "ai-agent-api-kube-api-server",
@@ -38,8 +38,8 @@ module "ai-agent-api-secrets" {
     "ai-agent-api-redis-password",
   ]
 
-  google_service_account_id    = "secrets-manager-sa"
-  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
 
@@ -51,13 +51,13 @@ module "portfolio-secrets" {
 
   label               = "portfolio"
   k8s_namespace       = "portfolio"
-  k8s_service_account = "secrets-manager-sa"
+  k8s_service_account = var.secrets_manager_sa_id
   secrets = [
     "portfolio-chat-api-key",
   ]
 
-  google_service_account_id    = "secrets-manager-sa"
-  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
 
@@ -69,13 +69,13 @@ module "openid-server-secrets" {
 
   label               = "openid-server"
   k8s_namespace       = "openid-server"
-  k8s_service_account = "secrets-manager-sa"
+  k8s_service_account = var.secrets_manager_sa_id
   secrets = [
     "openid-server-kubernetes-api-url",
   ]
 
-  google_service_account_id    = "secrets-manager-sa"
-  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
 
@@ -88,7 +88,7 @@ module "atlantis-secrets" {
 
   label               = "atlantis"
   k8s_namespace       = "atlantis"
-  k8s_service_account = "secrets-manager-sa"
+  k8s_service_account = var.secrets_manager_sa_id
   secrets = [
     # GitHub webhook secrets
     "atlantis-github-token",
@@ -109,7 +109,7 @@ module "atlantis-secrets" {
     "atlantis-cloudflare-zone-id",
   ]
 
-  google_service_account_id    = "secrets-manager-sa"
-  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }

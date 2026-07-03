@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=admin123
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "admin123"]
