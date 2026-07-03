@@ -1,4 +1,4 @@
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: validation.webhook.pipeline.tekton.dev
@@ -9,7 +9,7 @@ metadata:
 webhooks:
   - name: validation.webhook.pipeline.tekton.dev
     admissionReviewVersions:
-      - v1beta1
+      - v1
     clientConfig:
       service:
         name: {{ template "pipelines.fullname" . }}-webhook
@@ -17,7 +17,7 @@ webhooks:
     failurePolicy: Fail
     sideEffects: None
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: webhook.pipeline.tekton.dev
@@ -28,7 +28,7 @@ metadata:
 webhooks:
   - name: webhook.pipeline.tekton.dev
     admissionReviewVersions:
-      - v1beta1
+      - v1
     clientConfig:
       service:
         name: {{ template "pipelines.fullname" . }}-webhook
@@ -36,7 +36,7 @@ webhooks:
     failurePolicy: Fail
     sideEffects: None
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: config.webhook.pipeline.tekton.dev
@@ -47,7 +47,7 @@ metadata:
 webhooks:
   - name: config.webhook.pipeline.tekton.dev
     admissionReviewVersions:
-      - v1beta1
+      - v1
     clientConfig:
       service:
         name: {{ template "pipelines.fullname" . }}-webhook

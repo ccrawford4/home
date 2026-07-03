@@ -1,6 +1,6 @@
 {{- if .Values.webhook.podDisruptionBudget.enabled }}
 {{- if gt (.Values.webhook.replicas | int) 1 }}
-apiVersion: policy/v1beta1
+apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: {{ template "pipelines.fullname" . }}-webhook
