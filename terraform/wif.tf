@@ -44,7 +44,7 @@ resource "google_service_account_iam_member" "workload_identity_binding_atlantis
 }
 
 resource "google_storage_bucket_iam_member" "atlantis_write_tf_state" {
-  bucket = "tf-state-home-prod"
+  bucket = var.tf_state_bucket_name
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.home_cluster_sa.email}"
 }
