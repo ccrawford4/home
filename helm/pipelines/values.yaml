@@ -18,7 +18,7 @@ rbac:
 
 podSecurityPolicy:
   # podSecurityPolicy.enabled -- Enable pod security policy
-  enabled: true
+  enabled: false
 config:
   # config.artifactBucket -- Configuration for artifact bucket (see https://github.com/tektoncd/pipeline/blob/master/docs/install.md)
   # @default -- See [values.yaml](./values.yaml)
