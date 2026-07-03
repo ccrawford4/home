@@ -19,6 +19,15 @@ pub struct Server {
     api_key: String,
 }
 
+#[derive(Clone)]
+pub struct ChatRequestState {
+    request_id: String,
+}
+
+tokio::task_local! {
+    pub static CHAT_REQUEST_STATE: ChatRequestState;
+}
+
 impl Server {
     pub fn new(agent: Arc<Agent>, host: String, api_key: String) -> Self {
         Server {
@@ -87,13 +96,8 @@ impl Server {
 
                 match request.path {
                     Path::Chat => {
-                        self.chat_handler(
-                            &mut stream,
-                            request.method,
-                            request.query_params,
-                            request.body,
-                        )
-                        .await
+                        self.chat_handler(&mut stream, request.method, request.body)
+                            .await
                     }
                     Path::ChatResponse => {
                         self.chat_response_handler(
@@ -140,7 +144,6 @@ impl Server {
         &self,
         stream: &mut TcpStream,
         method: Method,
-        query_params: HashMap<String, String>,
         body: Option<String>,
     ) -> io::Result<()> {
         match method {
@@ -159,14 +162,10 @@ impl Server {
 
                 match serde_json::from_str::<ChatRequest>(&body_str) {
                     Ok(chat_req) => {
-                        let is_async = query_params
-                            .get("async")
-                            .is_some_and(|value| value.eq_ignore_ascii_case("true"));
                         info!(
-                            "Processing chat request ({} chars) with request_id: {} async={}",
+                            "Processing chat request ({} chars) with request_id: {}",
                             chat_req.prompt.len(),
-                            chat_req.request_id,
-                            is_async
+                            chat_req.request_id
                         );
 
                         if chat_req.request_id.is_empty() {
@@ -199,104 +198,65 @@ impl Server {
                             chat_history = converted_history;
                         }
 
-                        if is_async {
-                            let request_id = chat_req.request_id;
-                            let prompt = chat_req.prompt;
-                            let agent = Arc::clone(&self.agent);
+                        let prompt = chat_req.prompt;
+                        let agent = Arc::clone(&self.agent);
 
-                            if let Err(e) =
-                                crate::redis::write_pending_chat_response(&request_id).await
-                            {
-                                warn!(
-                                    "Failed to mark async chat request as pending for request_id={}: {}",
-                                    request_id, e
-                                );
-                            }
+                        // Set the local state
+                        let state = ChatRequestState {
+                            request_id: chat_req.request_id.clone(),
+                        };
 
-                            tokio::spawn(async move {
-                                let chat_result = match agent
-                                    .chat(prompt, chat_history, request_id.clone())
-                                    .await
-                                {
-                                    Ok(resp) => Ok(resp),
-                                    Err(e) => Err(e.to_string()),
-                                };
-
-                                match chat_result {
-                                    Ok(resp) => {
-                                        info!(
-                                            "Background chat completed for request_id={} ({} chars)",
-                                            request_id,
-                                            resp.len()
-                                        );
-                                        if let Err(e) = crate::redis::write_completed_chat_response(
-                                            &request_id,
-                                            &resp,
-                                        )
+                        tokio::spawn(async move {
+                            CHAT_REQUEST_STATE
+                                .scope(state, async move {
+                                    // Create a local copy of the request_id so the redis hooks
+                                    // will have access to it even if the original state is
+                                    // dropped.
+                                    let request_id =
+                                        CHAT_REQUEST_STATE.with(|s| s.request_id.clone());
+                                    let chat_result = match agent
+                                        .chat(prompt, chat_history, request_id.clone())
                                         .await
-                                        {
-                                            error!(
-                                                "Failed to write async chat response to Redis for request_id={}: {}",
-                                                request_id, e
-                                            );
-                                        }
-                                    }
-                                    Err(error_message) => {
-                                        error!(
-                                            "Background chat failed for request_id={}: {}",
-                                            request_id, error_message
-                                        );
-                                        if let Err(write_err) =
-                                            crate::redis::write_failed_chat_response(
-                                                &request_id,
-                                                "Failed to generate response",
-                                                &error_message,
-                                            )
-                                            .await
-                                        {
-                                            error!(
-                                                "Failed to write async chat error to Redis for request_id={}: {}",
-                                                request_id, write_err
-                                            );
-                                        }
-                                    }
-                                }
-                            });
+                                    {
+                                        Ok(resp) => Ok(resp),
+                                        Err(e) => Err(e.to_string()),
+                                    };
 
-                            Self::send_response(stream, "200 OK", "")
-                        } else {
-                            let response = self
-                                .agent
-                                .chat(chat_req.prompt, chat_history, chat_req.request_id)
+                                    match chat_result {
+                                        Ok(resp) => {
+                                            info!(
+                                        "Background chat completed for request_id={} ({} chars)",
+                                        request_id,
+                                        resp.len()
+                                    );
+                                        }
+                                        Err(error_message) => {
+                                            error!(
+                                                "Background chat failed for request_id={}: {}",
+                                                request_id, error_message
+                                            );
+                                        }
+                                    }
+                                })
                                 .await;
-                            match response {
-                                Ok(resp) => {
-                                    info!("Generated response ({} chars)", resp.len());
-                                    debug!("Response content: {}", resp);
-                                    Self::send_response(stream, "200 OK", &resp)
-                                }
-                                Err(e) => {
-                                    error!("Failed to generate chat response: {}", e);
-                                    Self::send_response(
-                                        stream,
-                                        "500 Internal Server Error",
-                                        "Failed to generate response",
-                                    )
-                                }
-                            }
-                        }
+                        });
+
+                        // Send the immediate response to the client indicating that the request is
+                        // being processed asynchronously.
+                        Self::send_response(stream, "200 OK", "")
                     }
                     Err(e) => {
-                        warn!(
-                            "Failed to parse chat request JSON (request: {}), ERROR: {}",
-                            &body_str, e
-                        );
-                        Self::send_response(stream, "400 Bad Request", "Invalid JSON body")
+                        warn!("Failed to parse chat request body: {}", e);
+                        Self::send_response(
+                            stream,
+                            "400 Bad Request",
+                            "Invalid JSON in request body",
+                        )
                     }
                 }
             }
-            _ => {
-                warn!("Invalid HTTP method for /chat endpoint");
+            Method::GET => {
+                warn!("Received GET request on /chat endpoint, which is not allowed");
                 Self::send_response(stream, "405 Method Not Allowed", "Invalid method for /chat")
             }
         }
