@@ -1,6 +1,7 @@
 {{- if .Values.podSecurityPolicy.enabled }}
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
+namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}
   labels:

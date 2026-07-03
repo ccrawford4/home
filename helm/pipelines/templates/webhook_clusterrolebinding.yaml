@@ -1,6 +1,7 @@
 {{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
+namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-webhook
   labels:
