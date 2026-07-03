@@ -3,10 +3,12 @@ pub mod tools;
 use crate::environment::Environment;
 use crate::kube::{KubeAgent, ListNamespacesTool, ListPodsTool, NodeMetricsTool};
 use crate::redis;
-use rig::agent::{CancelSignal, PromptHook};
+use rig::agent::PromptHook;
+use rig::agent::ToolCallHookAction;
 use rig::client::CompletionClient;
 use rig::completion::{Message, Prompt};
 use rig::providers::openai::{self, responses_api::ResponsesCompletionModel};
+use rig::wasm_compat::WasmCompatSend;
 use serde_json::json;
 use std::error::Error;
 use std::future::Future;
@@ -34,8 +36,8 @@ impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
         tool_name: &str,
         tool_call_id: Option<String>,
         args: &str,
-        _cancel_sig: CancelSignal,
-    ) -> impl Future<Output = ()> + Send {
+        _rand: &str,
+    ) -> impl Future<Output = ToolCallHookAction> + WasmCompatSend {
         let request_id = self.request_id.clone();
         let tool_name = tool_name.to_string();
         let tool_call_id = tool_call_id.clone();
@@ -70,7 +72,10 @@ impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
                         "Failed to parse tool args as JSON for request_id={} tool={}: {}; storing raw payload",
                         request_id, tool_name, e
                     );
-                    json!({ "raw": args })
+                    json!({ "raw": args });
+                    return ToolCallHookAction::Skip {
+                        reason: format!("Failed to parse tool args as JSON: {}", e),
+                    };
                 }
             };
             warn!(
@@ -89,9 +94,13 @@ impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
                     request_id, e
                 );
                 error!("Failed to write tool call to Redis: {}", e);
+                return ToolCallHookAction::Skip {
+                    reason: format!("Failed to write tool call to Redis: {}", e),
+                };
             } else {
                 warn!("Hook Redis write succeeded for request_id={}", request_id);
                 info!("Tool call written to Redis for request_id {}", request_id);
+                ToolCallHookAction::Continue
             }
         }
     }
@@ -110,7 +119,7 @@ impl Agent {
 
         debug!("open ai api key: {}", &api_key);
 
-        let openai_client = openai::Client::<reqwest::Client>::new(api_key).map_err(|e| {
+        let openai_client = openai::Client::new(api_key).map_err(|e| {
             error!("Failed to create OpenAI client: {}", e);
             e
         })?;
@@ -167,9 +176,10 @@ impl Agent {
             match self
                 .client
                 .prompt(&prompt)
-                .with_history(&mut chat_history)
+                //                .with_history(&mut chat_history)
                 .with_hook(hook.clone())
-                .multi_turn(20)
+                //               .multi_turn(20)
+                //
                 .await
             {
                 Ok(response) => {
