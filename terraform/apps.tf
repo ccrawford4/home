@@ -98,7 +98,7 @@ resource "cloudflare_zero_trust_access_application" "atlantis_webhooks" {
   allowed_idps              = []
   auto_redirect_to_identity = false
   session_duration          = "24h"
-  domain                    = "atlantis.calum.sh"
+  domain                    = "atlantis.calum.sh/events"
 
   destinations = [{
     type = "public"

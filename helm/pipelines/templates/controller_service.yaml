@@ -1,0 +1,27 @@
+{{- if .Values.controller.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "pipelines.fullname" . }}-controller
+  labels:
+    {{- include "pipelines.baseLabels" . | nindent 4 }}
+    {{- include "pipelines.helmLabels" . | nindent 4 }}
+    {{- include "pipelines.versionLabels" . | nindent 4 }}
+    {{- include "pipelines.componentLabels" "controller" | nindent 4 }}
+    {{- include "pipelines.nameLabels" "controller" | nindent 4 }}
+  {{- with .Values.controller.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.controller.service.type }}
+  ports:
+    - name: {{ .Values.controller.metrics.portName }}
+      port: {{ .Values.controller.metrics.port }}
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    {{- include "pipelines.baseLabels" . | nindent 4 }}
+    {{- include "pipelines.componentLabels" "controller" | nindent 4 }}
+    {{- include "pipelines.nameLabels" "controller" | nindent 4 }}
+{{- end }}

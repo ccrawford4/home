@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "pipelines.fullname" . }}-controller
+  labels:
+    {{- include "pipelines.baseLabels" . | nindent 4 }}
+    {{- include "pipelines.helmLabels" . | nindent 4 }}
+    {{- include "pipelines.versionLabels" . | nindent 4 }}
+    {{- include "pipelines.componentLabels" "controller" | nindent 4 }}
+    {{- include "pipelines.nameLabels" "controller" | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "pipelines.baseLabels" . | nindent 6 }}
+      {{- include "pipelines.componentLabels" "controller" | nindent 6 }}
+      {{- include "pipelines.nameLabels" "controller" | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.controller.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "pipelines.baseLabels" . | nindent 8 }}
+        {{- include "pipelines.helmLabels" . | nindent 8 }}
+        {{- include "pipelines.versionLabels" . | nindent 8 }}
+        {{- include "pipelines.componentLabels" "controller" | nindent 8 }}
+        {{- include "pipelines.nameLabels" "controller" | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "pipelines.controllerServiceAccount" . }}
+      {{- with .Values.controller.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: controller
+          image: {{ template "pipelines.controllerImage" . }}
+          imagePullPolicy: {{ .Values.controller.image.pullPolicy | quote }}
+          args:
+          {{- range .Values.controller.args }}
+            - {{ . | quote }}
+          {{- end }}
+          env:
+            - name: SYSTEM_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CONFIG_DEFAULTS_NAME
+              value: {{ template "pipelines.fullname" . }}-defaults
+            - name: CONFIG_LOGGING_NAME
+              value: {{ template "pipelines.fullname" . }}-logging
+            - name: CONFIG_OBSERVABILITY_NAME
+              value: {{ template "pipelines.fullname" . }}-observability
+            - name: CONFIG_ARTIFACT_BUCKET_NAME
+              value: {{ template "pipelines.fullname" . }}-artifact-bucket
+            - name: CONFIG_ARTIFACT_PVC_NAME
+              value: {{ template "pipelines.fullname" . }}-artifact-pvc
+            - name: CONFIG_FEATURE_FLAGS_NAME
+              value: {{ template "pipelines.fullname" . }}-feature-flags
+            - name: CONFIG_LEADERELECTION_NAME
+              value: {{ template "pipelines.fullname" . }}-leader-election
+            - name: METRICS_DOMAIN
+              value: tekton.dev/pipeline
+          volumeMounts:
+            - mountPath: /etc/config-logging
+              name: config-logging
+          {{- with .Values.controller.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.controller.metrics.enabled }}
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          {{- end }}
+      volumes:
+        - name: config-logging
+          configMap:
+            name: {{ template "pipelines.fullname" . }}-logging
