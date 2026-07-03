@@ -6,6 +6,7 @@ use crate::redis;
 use rig::agent::PromptHook;
 use rig::agent::ToolCallHookAction;
 use rig::client::CompletionClient;
+use rig::completion::Chat;
 use rig::completion::{Message, Prompt};
 use rig::providers::openai::{self, responses_api::ResponsesCompletionModel};
 use rig::wasm_compat::WasmCompatSend;
@@ -35,8 +36,8 @@ impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
         &self,
         tool_name: &str,
         tool_call_id: Option<String>,
+        _internal_call_id: &str,
         args: &str,
-        _rand: &str,
     ) -> impl Future<Output = ToolCallHookAction> + WasmCompatSend {
         let request_id = self.request_id.clone();
         let tool_name = tool_name.to_string();
@@ -72,7 +73,10 @@ impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
                         "Failed to parse tool args as JSON for request_id={} tool={}: {}; storing raw payload",
                         request_id, tool_name, e
                     );
-                    json!({ "raw": args });
+                    debug!(
+                        "Raw tool args for request_id={} tool={}: {}",
+                        request_id, tool_name, args
+                    );
                     return ToolCallHookAction::Skip {
                         reason: format!("Failed to parse tool args as JSON: {}", e),
                     };
@@ -176,10 +180,9 @@ impl Agent {
             match self
                 .client
                 .prompt(&prompt)
-                //                .with_history(&mut chat_history)
-                .with_hook(hook.clone())
-                //               .multi_turn(20)
-                //
+                //.chat(&prompt, &chat_history)
+                // .with_hook(hook.clone())
+                // .multi_turn(20)
                 .await
             {
                 Ok(response) => {
