@@ -51,3 +51,30 @@ variable "cloudflare_zone_id" {
   description = "The Cloudflare zone ID for the domain"
   type        = string
 }
+
+variable "tf_state_bucket_name" {
+  description = "The name of the GCS bucket used for Terraform state"
+  type        = string
+}
+
+variable "example_bucket_name" {
+  description = "The name of the example GCS bucket"
+  type        = string
+}
+
+variable "gar_location" {
+  description = "The location for the Artifact Registry repository"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "secrets_manager_sa_id" {
+  description = "The account ID for the secrets manager service account"
+  type        = string
+  default     = "secrets-manager-sa"
+}
+
+variable "secrets_manager_sa_email" {
+  description = "The email of the secrets manager service account"
+  type        = string
+}

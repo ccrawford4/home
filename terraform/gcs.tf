@@ -1,5 +1,5 @@
 resource "google_storage_bucket" "terraform_state_bucket" {
-  name     = "tf-state-home-prod"
+  name     = var.tf_state_bucket_name
   location = var.region
 
   lifecycle_rule {
@@ -48,6 +48,6 @@ resource "google_storage_bucket" "terraform_state_bucket" {
 }
 
 resource "google_storage_bucket" "example_bucket" {
-  name     = "example-bucket-terraform-1"
+  name     = var.example_bucket_name
   location = var.region
 }
