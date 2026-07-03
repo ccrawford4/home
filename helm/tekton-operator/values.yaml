@@ -1,0 +1,3 @@
+# Keep the original release defaults intact.
+namespace: tekton-operator
+
