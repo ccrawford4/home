@@ -1,7 +1,9 @@
 pub mod types;
 
 use crate::agent::Agent;
-use rig::completion::Message;
+use crate::redis::{ChatDetails, write_completed_chat_response, write_failed_chat_response};
+use rig::{OneOrMany, completion::Message};
+use rig::completion::message::UserContent;
 use std::collections::HashMap;
 use std::io::{self, prelude::*};
 use std::net::{TcpListener, TcpStream};
@@ -21,7 +23,7 @@ pub struct Server {
 
 #[derive(Clone)]
 pub struct ChatRequestState {
-    request_id: String,
+    pub request_id: String,
 }
 
 tokio::task_local! {
@@ -214,6 +216,8 @@ impl Server {
                                     // dropped.
                                     let request_id =
                                         CHAT_REQUEST_STATE.with(|s| s.request_id.clone());
+                                    let prompt_for_redis = prompt.clone();
+                                    let history_for_redis = chat_history.clone();
                                     let chat_result = match agent
                                         .chat(prompt, chat_history, request_id.clone())
                                         .await
@@ -224,13 +228,43 @@ impl Server {
 
                                     match chat_result {
                                         Ok(resp) => {
+                                            if let Err(e) =
+                                                write_completed_chat_response(&request_id, &resp)
+                                                    .await
+                                            {
+                                                error!(
+                                                    "Failed to write completed chat response for request_id={}: {}",
+                                                    request_id, e
+                                                );
+                                            }
                                             info!(
-                                        "Background chat completed for request_id={} ({} chars)",
-                                        request_id,
-                                        resp.len()
-                                    );
+                                                "Background chat completed for request_id={} ({} chars)",
+                                                request_id,
+                                                resp.len()
+                                            );
                                         }
                                         Err(error_message) => {
+                                            if let Err(e) = write_failed_chat_response(
+                                                &request_id,
+                                                &error_message,
+                                                ChatDetails {
+                                                    prompt: Message::User {
+                                                        content: OneOrMany::one(
+                                                            UserContent::Text(
+                                                                prompt_for_redis.into(),
+                                                            ),
+                                                        ),
+                                                    },
+                                                    history: history_for_redis,
+                                                },
+                                            )
+                                            .await
+                                            {
+                                                error!(
+                                                    "Failed to write failed chat response for request_id={}: {}",
+                                                    request_id, e
+                                                );
+                                            }
                                             error!(
                                                 "Background chat failed for request_id={}: {}",
                                                 request_id, error_message
@@ -362,18 +396,22 @@ impl Server {
                     );
                 }
 
-                match crate::redis::read_tool_calls(response_id).await {
-                    Ok(tool_calls) => {
+                match (
+                    crate::redis::read_tool_calls(response_id).await,
+                    crate::redis::read_request_events(response_id).await,
+                ) {
+                    (Ok(tool_calls), Ok(events)) => {
                         let body = serde_json::json!({
                             "response_id": response_id,
                             "tools": tool_calls,
+                            "events": events,
                         })
                         .to_string();
                         Self::send_response(stream, "200 OK", &body)
                     }
-                    Err(e) => {
+                    (Err(e), _) | (_, Err(e)) => {
                         error!(
-                            "Failed to read tool calls for response_id={}: {}",
+                            "Failed to read request data for response_id={}: {}",
                             response_id, e
                         );
                         Self::send_response(

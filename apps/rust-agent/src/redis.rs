@@ -1,8 +1,8 @@
 use once_cell::sync::OnceCell;
 use redis::Client;
-use rig::agent::HookAction;
+use rig::completion::Message;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, warn};
+use tracing::warn;
 
 static REDIS_CLIENT: OnceCell<Client> = OnceCell::new();
 
@@ -12,73 +12,81 @@ pub async fn init(redis_url: &str, skip_redis: &bool) -> Result<(), redis::Redis
         return Ok(());
     }
 
-    warn!(
-        "Initializing Redis client from configured URL ({} chars)",
-        redis_url.len()
-    );
-
-    let client = match REDIS_CLIENT.get_or_try_init(|| Client::open(redis_url)) {
-        Ok(client) => {
-            warn!("Redis client created successfully");
-            client
-        }
-        Err(e) => {
-            warn!("Redis client creation failed: {}", e);
-            error!("Failed to create Redis client: {}", e);
-            return Err(e);
-        }
-    };
-
-    warn!("Verifying Redis connectivity with startup connection check");
-    let mut conn = match client.get_multiplexed_async_connection().await {
-        Ok(conn) => {
-            warn!("Redis startup connection acquired successfully");
-            conn
-        }
-        Err(e) => {
-            warn!("Redis startup connection failed: {}", e);
-            error!("Failed to connect to Redis during startup: {}", e);
-            return Err(e);
-        }
-    };
-
-    match redis::cmd("PING").query_async::<_, String>(&mut conn).await {
-        Ok(response) => {
-            warn!("Redis startup PING succeeded with response={}", response);
-            Ok(())
-        }
-        Err(e) => {
-            warn!("Redis startup PING failed: {}", e);
-            error!("Failed to verify Redis during startup: {}", e);
-            Err(e)
-        }
-    }
+    let client = REDIS_CLIENT.get_or_try_init(|| Client::open(redis_url))?;
+    let mut conn = client.get_multiplexed_async_connection().await?;
+    redis::cmd("PING").query_async::<_, String>(&mut conn).await?;
+    Ok(())
 }
 
-pub struct ToolCall {
-    pub name: String,
-    pub args: serde_json::Value,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum RequestEventRecord {
+    CompletionResponse {
+        timestamp: String,
+        prompt: Message,
+        response: serde_json::Value,
+    },
+    InvalidToolCall {
+        timestamp: String,
+        tool_name: String,
+        tool_call_id: Option<String>,
+        internal_call_id: Option<String>,
+        args: Option<String>,
+        available_tools: Vec<String>,
+        allowed_tools: Vec<String>,
+        tool_choice: Option<serde_json::Value>,
+        chat_history: Vec<Message>,
+        is_streaming: bool,
+    },
+    ToolCall {
+        timestamp: String,
+        tool_name: String,
+        tool_call_id: Option<String>,
+        internal_call_id: String,
+        args: serde_json::Value,
+    },
+    ToolCallResult {
+        timestamp: String,
+        tool_name: String,
+        tool_call_id: Option<String>,
+        internal_call_id: String,
+        args: serde_json::Value,
+        result: serde_json::Value,
+    },
+    TextDelta {
+        timestamp: String,
+        text_delta: String,
+        aggregated_text: String,
+    },
+    ToolCallDelta {
+        timestamp: String,
+        tool_call_id: String,
+        internal_call_id: String,
+        tool_name: Option<String>,
+        tool_call_delta: String,
+    },
+    StreamCompletionResponseFinish {
+        timestamp: String,
+        prompt: Message,
+        response: serde_json::Value,
+    },
 }
 
-impl ToolCall {
-    pub fn new(name: String, args: serde_json::Value) -> Self {
-        warn!(
-            "Creating ToolCall for tool={} args_type={}",
-            name,
-            json_type_name(&args)
-        );
-        Self { name, args }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCallRecord {
     pub name: String,
     pub args: serde_json::Value,
     pub timestamp: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatDetails {
+    pub prompt: Message,
+    pub history: Vec<Message>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatResponseRecord {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -86,149 +94,90 @@ pub struct ChatResponseRecord {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<String>,
+    pub details: Option<ChatDetails>,
     pub timestamp: String,
+}
+
+pub struct ToolCall {
+    pub name: String,
+    pub args: serde_json::Value,
+}
+
+async fn get_client() -> Result<&'static Client, Box<dyn std::error::Error>> {
+    REDIS_CLIENT
+        .get()
+        .ok_or_else(|| "Redis client not initialized".into())
+}
+
+async fn write_json<T: Serialize>(key: &str, record: &T) -> Result<(), Box<dyn std::error::Error>> {
+    let client = get_client().await?;
+    let mut conn = client.get_multiplexed_async_connection().await?;
+    let json = serde_json::to_string(record)?;
+    redis::cmd("RPUSH")
+        .arg(key)
+        .arg(json)
+        .query_async::<_, ()>(&mut conn)
+        .await?;
+    Ok(())
 }
 
 pub async fn write_tool_call(
     request_id: &str,
     tool_call: ToolCall,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    warn!(
-        "write_tool_call invoked for request_id={} tool={}",
-        request_id, tool_call.name
-    );
-    let Some(client) = REDIS_CLIENT.get() else {
-        warn!(
-            "Redis client not initialized; skipping write for request_id={} tool={}",
-            request_id, tool_call.name
-        );
-        debug!("Redis client not initialized, skipping tool call write");
-        return Ok(());
-    };
-
-    info!("Writing tool call to Redis for request_id: {}", request_id);
-    warn!(
-        "Opening multiplexed Redis connection for request_id={} tool={}",
-        request_id, tool_call.name
-    );
-
-    let mut conn = match client.get_multiplexed_async_connection().await {
-        Ok(c) => {
-            warn!(
-                "Redis connection acquired for request_id={} tool={}",
-                request_id, tool_call.name
-            );
-            c
-        }
-        Err(e) => {
-            warn!(
-                "Redis connection acquisition failed for request_id={} tool={}: {}",
-                request_id, tool_call.name, e
-            );
-            error!("Failed to get Redis connection: {}", e);
-            return Err(Box::new(e));
-        }
-    };
-
-    warn!(
-        "Building ToolCallRecord for request_id={} tool={} args_type={}",
-        request_id,
-        tool_call.name,
-        json_type_name(&tool_call.args)
-    );
     let record = ToolCallRecord {
         name: tool_call.name,
         args: tool_call.args,
         timestamp: chrono::Utc::now().to_rfc3339(),
     };
+    write_json(&format!("request:{}:tool_calls", request_id), &record).await
+}
 
-    warn!(
-        "Serializing ToolCallRecord for request_id={} tool={} timestamp={}",
-        request_id, record.name, record.timestamp
-    );
-    let json_str = serde_json::to_string(&record)?;
-    let redis_key = format!("request:{}:tool_calls", request_id);
-    warn!(
-        "Serialized ToolCallRecord for request_id={} tool={} payload_bytes={}",
-        request_id,
-        record.name,
-        json_str.len()
-    );
-    warn!(
-        "Issuing Redis RPUSH for key={} request_id={} tool={}",
-        redis_key, request_id, record.name
-    );
-
-    match redis::cmd("RPUSH")
-        .arg(&redis_key)
-        .arg(&json_str)
-        .query_async::<_, ()>(&mut conn)
-        .await
-    {
-        Ok(_) => {
-            warn!(
-                "Redis RPUSH completed for key={} request_id={} tool={}",
-                redis_key, request_id, record.name
-            );
-            info!("Redis RPUSH succeeded for request_id: {}", request_id);
-            Ok(())
-        }
-        Err(e) => {
-            warn!(
-                "Redis RPUSH failed for key={} request_id={} tool={}: {}",
-                redis_key, request_id, record.name, e
-            );
-            error!("Failed to write tool call to Redis: {}", e);
-            Err(Box::new(e))
-        }
-    }
+pub async fn write_request_event(
+    request_id: &str,
+    record: &RequestEventRecord,
+) -> Result<(), Box<dyn std::error::Error>> {
+    write_json(&format!("request:{}:events", request_id), record).await
 }
 
 pub async fn read_tool_calls(
     request_id: &str,
 ) -> Result<Vec<ToolCallRecord>, Box<dyn std::error::Error>> {
-    warn!("read_tool_calls invoked for request_id={}", request_id);
-
-    let Some(client) = REDIS_CLIENT.get() else {
-        error!(
-            "Redis client not initialized; cannot read tool calls for request_id={}",
-            request_id
-        );
-        return Err("Redis client not initialized".into());
-    };
-
+    let client = get_client().await?;
     let mut conn = client.get_multiplexed_async_connection().await?;
-    let redis_key = format!("request:{}:tool_calls", request_id);
-    warn!(
-        "Issuing Redis LRANGE for key={} request_id={}",
-        redis_key, request_id
-    );
-
     let raw_records: Vec<String> = redis::cmd("LRANGE")
-        .arg(&redis_key)
+        .arg(format!("request:{}:tool_calls", request_id))
         .arg(0)
         .arg(-1)
         .query_async(&mut conn)
         .await?;
+    Ok(raw_records
+        .into_iter()
+        .map(|raw| serde_json::from_str::<ToolCallRecord>(&raw))
+        .collect::<Result<Vec<_>, _>>()?)
+}
 
-    let mut records = Vec::with_capacity(raw_records.len());
-    for raw_record in raw_records {
-        let record: ToolCallRecord = serde_json::from_str(&raw_record)?;
-        records.push(record);
-    }
-
-    info!(
-        "Redis LRANGE succeeded for request_id={} with {} tool calls",
-        request_id,
-        records.len()
-    );
-
-    Ok(records)
+pub async fn read_request_events(
+    request_id: &str,
+) -> Result<Vec<RequestEventRecord>, Box<dyn std::error::Error>> {
+    let client = get_client().await?;
+    let mut conn = client.get_multiplexed_async_connection().await?;
+    let raw_records: Vec<String> = redis::cmd("LRANGE")
+        .arg(format!("request:{}:events", request_id))
+        .arg(0)
+        .arg(-1)
+        .query_async(&mut conn)
+        .await?;
+    Ok(raw_records
+        .into_iter()
+        .map(|raw| serde_json::from_str::<RequestEventRecord>(&raw))
+        .collect::<Result<Vec<_>, _>>()?)
 }
 
 pub async fn write_pending_chat_response(
     request_id: &str,
+    prompt: Message,
+    history: Vec<Message>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     write_chat_response_record(
         request_id,
@@ -236,7 +185,7 @@ pub async fn write_pending_chat_response(
             status: "pending".to_string(),
             response: None,
             error: None,
-            details: None,
+            details: Some(ChatDetails { prompt, history }),
             timestamp: chrono::Utc::now().to_rfc3339(),
         },
     )
@@ -263,7 +212,7 @@ pub async fn write_completed_chat_response(
 pub async fn write_failed_chat_response(
     request_id: &str,
     error_message: &str,
-    details: &str,
+    details: ChatDetails,
 ) -> Result<(), Box<dyn std::error::Error>> {
     write_chat_response_record(
         request_id,
@@ -271,7 +220,7 @@ pub async fn write_failed_chat_response(
             status: "failed".to_string(),
             response: None,
             error: Some(error_message.to_string()),
-            details: Some(details.to_string()),
+            details: Some(details),
             timestamp: chrono::Utc::now().to_rfc3339(),
         },
     )
@@ -281,90 +230,38 @@ pub async fn write_failed_chat_response(
 pub async fn read_chat_response(
     request_id: &str,
 ) -> Result<Option<ChatResponseRecord>, Box<dyn std::error::Error>> {
-    warn!("read_chat_response invoked for request_id={}", request_id);
-
-    let Some(client) = REDIS_CLIENT.get() else {
-        error!(
-            "Redis client not initialized; cannot read chat response for request_id={}",
-            request_id
-        );
-        return Err("Redis client not initialized".into());
-    };
-
+    let client = get_client().await?;
     let mut conn = client.get_multiplexed_async_connection().await?;
-    let redis_key = format!("chat_response_{}", request_id);
-    warn!(
-        "Issuing Redis GET for key={} request_id={}",
-        redis_key, request_id
-    );
-
     let raw_record: Option<String> = redis::cmd("GET")
-        .arg(&redis_key)
+        .arg(format!("chat_response_{}", request_id))
         .query_async(&mut conn)
         .await?;
-    let Some(raw_record) = raw_record else {
-        info!(
-            "Redis GET returned no async chat response for request_id={}",
-            request_id
-        );
-        return Ok(None);
-    };
-
-    let record: ChatResponseRecord = serde_json::from_str(&raw_record)?;
-    info!(
-        "Redis GET succeeded for async chat response request_id={} status={}",
-        request_id, record.status
-    );
-    Ok(Some(record))
+    Ok(raw_record
+        .map(|raw| serde_json::from_str::<ChatResponseRecord>(&raw))
+        .transpose()?)
 }
 
 async fn write_chat_response_record(
     request_id: &str,
     record: ChatResponseRecord,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    warn!(
-        "write_chat_response_record invoked for request_id={} status={}",
-        request_id, record.status
-    );
-
-    let Some(client) = REDIS_CLIENT.get() else {
-        error!(
-            "Redis client not initialized; cannot write chat response for request_id={}",
-            request_id
-        );
-        return Err("Redis client not initialized".into());
-    };
-
+    let client = get_client().await?;
     let mut conn = client.get_multiplexed_async_connection().await?;
-    let redis_key = format!("chat_response_{}", request_id);
     let json_str = serde_json::to_string(&record)?;
-    warn!(
-        "Issuing Redis SET for key={} request_id={} payload_bytes={}",
-        redis_key,
-        request_id,
-        json_str.len()
-    );
-
     redis::cmd("SET")
-        .arg(&redis_key)
-        .arg(&json_str)
+        .arg(format!("chat_response_{}", request_id))
+        .arg(json_str)
         .query_async::<_, ()>(&mut conn)
         .await?;
-
-    info!(
-        "Redis SET succeeded for async chat response request_id={} status={}",
-        request_id, record.status
-    );
     Ok(())
 }
 
-fn json_type_name(value: &serde_json::Value) -> &'static str {
-    match value {
-        serde_json::Value::Null => "null",
-        serde_json::Value::Bool(_) => "bool",
-        serde_json::Value::Number(_) => "number",
-        serde_json::Value::String(_) => "string",
-        serde_json::Value::Array(_) => "array",
-        serde_json::Value::Object(_) => "object",
-    }
+pub fn tool_args_from_str(args: &str) -> serde_json::Value {
+    serde_json::from_str(args).unwrap_or_else(|_| serde_json::Value::String(args.to_string()))
+}
+
+pub fn response_to_json<T>(_: &T) -> serde_json::Value {
+    serde_json::json!({
+        "type": std::any::type_name::<T>(),
+    })
 }

@@ -2,6 +2,11 @@ pub mod tools;
 
 use crate::environment::Environment;
 use crate::kube::{KubeAgent, ListNamespacesTool, ListPodsTool, NodeMetricsTool};
+use crate::redis::{
+    response_to_json, tool_args_from_str, write_pending_chat_response, write_request_event,
+    write_tool_call, RequestEventRecord, ToolCall,
+};
+use crate::server::{ChatRequestState, CHAT_REQUEST_STATE};
 use rig::agent::HookAction;
 use rig::agent::InvalidToolCallContext;
 use rig::agent::InvalidToolCallHookAction;
@@ -31,23 +36,68 @@ pub struct Agent {
 #[derive(Clone)]
 struct RedisToolLoggingHook;
 
+trait FetchRequestState {
+    fn get_request(&self) -> Option<ChatRequestState>;
+}
+
+impl FetchRequestState for RedisToolLoggingHook {
+    fn get_request(&self) -> Option<ChatRequestState> {
+        Some(CHAT_REQUEST_STATE.with(|state| state.clone()))
+    }
+
+}
+
 impl<M: CompletionModel> PromptHook<M> for RedisToolLoggingHook {
     /// Called before the prompt is sent to the model
     fn on_completion_call(
         &self,
-        _prompt: &Message,
-        _history: &[Message],
+        prompt: &Message,
+        history: &[Message],
     ) -> impl Future<Output = HookAction> + WasmCompatSend {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let prompt = prompt.clone();
+        let history = history.to_vec();
+        async move {
+            if let Some(request) = request {
+                if let Err(e) = write_pending_chat_response(
+                    request.request_id.as_str(),
+                    prompt,
+                    history,
+                )
+                .await
+                {
+                    warn!("Failed to write pending chat response: {}", e);
+                }
+            } else {
+                warn!("No request state found in RedisToolLoggingHook");
+            }
+
+            HookAction::cont()
+        }
     }
 
     /// Called after the prompt is sent to the model and a response is received.
     fn on_completion_response(
         &self,
-        _prompt: &Message,
-        _response: &CompletionResponse<M::Response>,
+        prompt: &Message,
+        response: &CompletionResponse<M::Response>,
     ) -> impl Future<Output = HookAction> + WasmCompatSend {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let prompt = prompt.clone();
+        let response = response_to_json(response);
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::CompletionResponse {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    prompt,
+                    response,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write completion response event: {}", e);
+                }
+            }
+            HookAction::cont()
+        }
     }
 
     /// Called when a model-emitted tool call is unknown or disallowed by the
@@ -57,9 +107,30 @@ impl<M: CompletionModel> PromptHook<M> for RedisToolLoggingHook {
     /// retry, repair, or skip recovery for invalid tool calls.
     fn on_invalid_tool_call(
         &self,
-        _context: &InvalidToolCallContext,
+        context: &InvalidToolCallContext,
     ) -> impl Future<Output = InvalidToolCallHookAction> + WasmCompatSend {
-        async { InvalidToolCallHookAction::fail() }
+        let request = self.get_request();
+        let context = context.clone();
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::InvalidToolCall {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    tool_name: context.tool_name,
+                    tool_call_id: context.tool_call_id,
+                    internal_call_id: context.internal_call_id,
+                    args: context.args,
+                    available_tools: context.available_tools,
+                    allowed_tools: context.allowed_tools,
+                    tool_choice: context.tool_choice.map(|choice| serde_json::to_value(choice).unwrap_or_default()),
+                    chat_history: context.chat_history,
+                    is_streaming: context.is_streaming,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write invalid tool call event: {}", e);
+                }
+            }
+            InvalidToolCallHookAction::fail()
+        }
     }
 
     /// Called before a tool is invoked.
@@ -69,54 +140,153 @@ impl<M: CompletionModel> PromptHook<M> for RedisToolLoggingHook {
     /// - `ToolCallHookAction::Skip { reason }` - Reject tool execution; `reason` will be returned to the LLM as the tool result
     fn on_tool_call(
         &self,
-        _tool_name: &str,
-        _tool_call_id: Option<String>,
-        _internal_call_id: &str,
-        _args: &str,
+        tool_name: &str,
+        tool_call_id: Option<String>,
+        internal_call_id: &str,
+        args: &str,
     ) -> impl Future<Output = ToolCallHookAction> + WasmCompatSend {
-        async { ToolCallHookAction::cont() }
+        let request = self.get_request();
+        let tool_name = tool_name.to_string();
+        let args = tool_args_from_str(args);
+        let internal_call_id = internal_call_id.to_string();
+        async move {
+            if let Some(request) = request {
+                if let Err(e) = write_tool_call(
+                    request.request_id.as_str(),
+                    ToolCall {
+                        name: tool_name.clone(),
+                        args: args.clone(),
+                    },
+                )
+                .await
+                {
+                    warn!("Failed to write legacy tool call record: {}", e);
+                }
+
+                let record = RequestEventRecord::ToolCall {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    tool_name,
+                    tool_call_id,
+                    internal_call_id,
+                    args,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write tool call event: {}", e);
+                }
+            }
+            ToolCallHookAction::cont()
+        }
     }
 
     /// Called after a tool is invoked (and a result has been returned).
     fn on_tool_result(
         &self,
-        _tool_name: &str,
-        _tool_call_id: Option<String>,
-        _internal_call_id: &str,
-        _args: &str,
-        _result: &str,
+        tool_name: &str,
+        tool_call_id: Option<String>,
+        internal_call_id: &str,
+        args: &str,
+        result: &str,
     ) -> impl Future<Output = HookAction> + WasmCompatSend {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let tool_name = tool_name.to_string();
+        let args = tool_args_from_str(args);
+        let result = serde_json::from_str(result).unwrap_or_else(|_| serde_json::Value::String(result.to_string()));
+        let internal_call_id = internal_call_id.to_string();
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::ToolCallResult {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    tool_name,
+                    tool_call_id,
+                    internal_call_id,
+                    args,
+                    result,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write tool call result event: {}", e);
+                }
+            }
+            HookAction::cont()
+        }
     }
 
     /// Called when receiving a text delta (streaming responses only)
     fn on_text_delta(
         &self,
-        _text_delta: &str,
-        _aggregated_text: &str,
+        text_delta: &str,
+        aggregated_text: &str,
     ) -> impl Future<Output = HookAction> + Send {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let text_delta = text_delta.to_string();
+        let aggregated_text = aggregated_text.to_string();
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::TextDelta {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    text_delta,
+                    aggregated_text,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write text delta event: {}", e);
+                }
+            }
+            HookAction::cont()
+        }
     }
 
     /// Called when receiving a tool call delta (streaming_responses_only).
     /// `tool_name` is Some on the first delta for a tool call, None on subsequent deltas.
     fn on_tool_call_delta(
         &self,
-        _tool_call_id: &str,
-        _internal_call_id: &str,
-        _tool_name: Option<&str>,
-        _tool_call_delta: &str,
+        tool_call_id: &str,
+        internal_call_id: &str,
+        tool_name: Option<&str>,
+        tool_call_delta: &str,
     ) -> impl Future<Output = HookAction> + Send {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let tool_call_id = tool_call_id.to_string();
+        let internal_call_id = internal_call_id.to_string();
+        let tool_name = tool_name.map(|s| s.to_string());
+        let tool_call_delta = tool_call_delta.to_string();
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::ToolCallDelta {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    tool_call_id,
+                    internal_call_id,
+                    tool_name,
+                    tool_call_delta,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write tool call delta event: {}", e);
+                }
+            }
+            HookAction::cont()
+        }
     }
 
     /// Called after the model provider has finished streaming a text response from their completion API to the client.
     fn on_stream_completion_response_finish(
         &self,
-        _prompt: &Message,
-        _response: &<M as CompletionModel>::StreamingResponse,
+        prompt: &Message,
+        response: &<M as CompletionModel>::StreamingResponse,
     ) -> impl Future<Output = HookAction> + Send {
-        async { HookAction::cont() }
+        let request = self.get_request();
+        let prompt = prompt.clone();
+        let response = response_to_json(response);
+        async move {
+            if let Some(request) = request {
+                let record = RequestEventRecord::StreamCompletionResponseFinish {
+                    timestamp: chrono::Utc::now().to_rfc3339(),
+                    prompt,
+                    response,
+                };
+                if let Err(e) = write_request_event(request.request_id.as_str(), &record).await {
+                    warn!("Failed to write stream completion finish event: {}", e);
+                }
+            }
+            HookAction::cont()
+        }
     }
 }
 
@@ -188,7 +358,6 @@ impl Agent {
                 .client
                 .prompt(&prompt)
                 .await
-                //                .chat(&prompt, &mut chat_history)
                 // .with_hook(hook.clone())
                 // .multi_turn(20)
             {
