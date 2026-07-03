@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "pipelines.fullname" . }}-controller
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
