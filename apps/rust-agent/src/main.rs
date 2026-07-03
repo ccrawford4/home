@@ -36,7 +36,7 @@ async fn main() {
 
     let env = Environment::new();
 
-    if let Err(e) = redis::init(&env.redis_url).await {
+    if let Err(e) = redis::init(&env.redis_url, &env.skip_redis).await {
         error!(
             "Redis initialization failed; refusing to start server: {}",
             e

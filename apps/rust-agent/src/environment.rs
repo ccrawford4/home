@@ -48,6 +48,9 @@ pub struct Environment {
 
     /// Redis connection URL for storing tool calls
     pub redis_url: String,
+
+    // Whether to skip Redis initialization (useful for local development/testing)
+    pub skip_redis: bool,
 }
 
 impl Environment {
@@ -69,6 +72,18 @@ impl Environment {
             Err(_) => {
                 warn!("OPENAI_API_KEY not found in environment, using empty string");
                 String::new()
+            }
+        };
+
+        let skip_redis = match std::env::var("SKIP_REDIS") {
+            Ok(val) => {
+                let skip = val.to_lowercase() == "true";
+                info!("Skip Redis: {}", skip);
+                skip
+            }
+            Err(_) => {
+                debug!("SKIP_REDIS not set, defaulting to false");
+                false
             }
         };
 
@@ -175,6 +190,7 @@ impl Environment {
             kube_token,
             kube_certificate,
             redis_url,
+            skip_redis,
         }
     }
 

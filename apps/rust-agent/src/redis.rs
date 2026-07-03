@@ -5,7 +5,12 @@ use tracing::{debug, error, info, warn};
 
 static REDIS_CLIENT: OnceCell<Client> = OnceCell::new();
 
-pub async fn init(redis_url: &str) -> Result<(), redis::RedisError> {
+pub async fn init(redis_url: &str, skip_redis: &bool) -> Result<(), redis::RedisError> {
+    if *skip_redis {
+        warn!("Skipping Redis initialization due to configuration");
+        return Ok(());
+    }
+
     warn!(
         "Initializing Redis client from configured URL ({} chars)",
         redis_url.len()
