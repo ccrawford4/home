@@ -6,6 +6,7 @@ nameOverride:
 fullnameOverride: ''
 
 namespace: 'pipelines'
+createNamespace: false
 
 rbac:
   # rbac.create -- Create RBAC resources

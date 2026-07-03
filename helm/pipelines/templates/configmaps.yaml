@@ -1,9 +1,9 @@
 apiVersion: v1
 data: null
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-artifact-bucket
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -13,9 +13,9 @@ data:
 apiVersion: v1
 data: null
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-artifact-pvc
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -24,9 +24,9 @@ data:
 ---
 apiVersion: v1
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-defaults
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -35,9 +35,9 @@ data:
 ---
 apiVersion: v1
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-feature-flags
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -46,9 +46,9 @@ data:
 ---
 apiVersion: v1
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-leader-election
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -57,9 +57,9 @@ data:
 ---
 apiVersion: v1
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-logging
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
@@ -68,9 +68,9 @@ data:
 ---
 apiVersion: v1
 kind: ConfigMap
-namespace: {{ template "pipelines.namespace" . }}
 metadata:
   name: {{ template "pipelines.fullname" . }}-observability
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
