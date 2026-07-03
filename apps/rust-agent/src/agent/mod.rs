@@ -327,7 +327,7 @@ impl Agent {
     pub async fn chat(
         &self,
         prompt: String,
-        chat_history: Vec<Message>,
+        mut chat_history: Vec<Message>,
         request_id: String,
     ) -> Result<String, Box<dyn Error>> {
         debug!(
@@ -356,7 +356,7 @@ impl Agent {
 
             match self
                 .client
-                .prompt(&prompt)
+                .chat(prompt.as_str(), &mut chat_history)
                 .await
                 // .with_hook(hook.clone())
                 // .multi_turn(20)
