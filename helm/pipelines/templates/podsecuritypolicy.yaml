@@ -3,6 +3,7 @@ apiVersion: policy/v1
 kind: PodSecurityPolicy
 metadata:
   name: {{ template "pipelines.fullname" . }}
+  namespace: {{ template "pipelines.namespace" . }}
   labels:
     {{- include "pipelines.baseLabels" . | nindent 4 }}
     {{- include "pipelines.helmLabels" . | nindent 4 }}
