@@ -64,6 +64,13 @@ Create the name of the service account to use for controller
 {{- end -}}
 
 {{/*
+Create the namespace for namespaced resources.
+*/}}
+{{- define "pipelines.namespace" -}}
+{{- default .Release.Namespace .Values.namespace -}}
+{{- end -}}
+
+{{/*
 Create the name of the service account to use for webhook
 */}}
 {{- define "pipelines.webhookServiceAccount" -}}

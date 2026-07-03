@@ -1,9 +1,12 @@
 # version -- Tekton pipelines version used to add labels on deployments, pods and services
 version:
 # nameOverride -- Partially override resource generated names
-nameOverride: 'pipelines'
+nameOverride:
 # fullnameOverride -- Fully override resource generated names
 fullnameOverride: ''
+
+namespace: 'pipelines'
+
 rbac:
   # rbac.create -- Create RBAC resources
   create: true
@@ -11,6 +14,7 @@ rbac:
   controllerServiceAccount:
   # rbac.webhookServiceAccount -- Name of the service account to use for webhook when rbac.create is false
   webhookServiceAccount:
+
 podSecurityPolicy:
   # podSecurityPolicy.enabled -- Enable pod security policy
   enabled: true
