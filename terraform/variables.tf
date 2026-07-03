@@ -41,6 +41,11 @@ variable "cloudflare_email" {
   type        = string
 }
 
+variable "access_policy_admin_emails" {
+  description = "List of email addresses allowed admin access via Cloudflare Zero Trust policies"
+  type        = list(string)
+}
+
 variable "k8s_server_ip" {
   description = "The Kubernetes API server IP address"
   type        = string
