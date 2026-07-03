@@ -1,5 +1,6 @@
 use once_cell::sync::OnceCell;
 use redis::Client;
+use rig::agent::HookAction;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, warn};
 

@@ -2,15 +2,17 @@ pub mod tools;
 
 use crate::environment::Environment;
 use crate::kube::{KubeAgent, ListNamespacesTool, ListPodsTool, NodeMetricsTool};
-use crate::redis;
+use rig::agent::HookAction;
+use rig::agent::InvalidToolCallContext;
+use rig::agent::InvalidToolCallHookAction;
 use rig::agent::PromptHook;
 use rig::agent::ToolCallHookAction;
 use rig::client::CompletionClient;
-use rig::completion::Chat;
-use rig::completion::{Message, Prompt};
+use rig::completion::CompletionModel;
+use rig::completion::CompletionResponse;
+use rig::completion::*;
 use rig::providers::openai::{self, responses_api::ResponsesCompletionModel};
 use rig::wasm_compat::WasmCompatSend;
-use serde_json::json;
 use std::error::Error;
 use std::future::Future;
 use tools::WrappedPortfolioAPISearch;
@@ -23,90 +25,98 @@ use tracing::*;
 /// - Portfolio API tools for portfolio information
 /// - Kubernetes API tools for cluster metrics and pod information
 pub struct Agent {
-    client: rig::agent::Agent<ResponsesCompletionModel>,
+    client: rig::agent::Agent<ResponsesCompletionModel, RedisToolLoggingHook>,
 }
 
 #[derive(Clone)]
-struct RedisToolLoggingHook {
-    request_id: String,
-}
+struct RedisToolLoggingHook;
 
-impl PromptHook<ResponsesCompletionModel> for RedisToolLoggingHook {
+impl<M: CompletionModel> PromptHook<M> for RedisToolLoggingHook {
+    /// Called before the prompt is sent to the model
+    fn on_completion_call(
+        &self,
+        _prompt: &Message,
+        _history: &[Message],
+    ) -> impl Future<Output = HookAction> + WasmCompatSend {
+        async { HookAction::cont() }
+    }
+
+    /// Called after the prompt is sent to the model and a response is received.
+    fn on_completion_response(
+        &self,
+        _prompt: &Message,
+        _response: &CompletionResponse<M::Response>,
+    ) -> impl Future<Output = HookAction> + WasmCompatSend {
+        async { HookAction::cont() }
+    }
+
+    /// Called when a model-emitted tool call is unknown or disallowed by the
+    /// current request's tool choice.
+    ///
+    /// The default behavior remains fail-fast. Override this method to opt into
+    /// retry, repair, or skip recovery for invalid tool calls.
+    fn on_invalid_tool_call(
+        &self,
+        _context: &InvalidToolCallContext,
+    ) -> impl Future<Output = InvalidToolCallHookAction> + WasmCompatSend {
+        async { InvalidToolCallHookAction::fail() }
+    }
+
+    /// Called before a tool is invoked.
+    ///
+    /// # Returns
+    /// - `ToolCallHookAction::Continue` - Allow tool execution to proceed
+    /// - `ToolCallHookAction::Skip { reason }` - Reject tool execution; `reason` will be returned to the LLM as the tool result
     fn on_tool_call(
         &self,
-        tool_name: &str,
-        tool_call_id: Option<String>,
+        _tool_name: &str,
+        _tool_call_id: Option<String>,
         _internal_call_id: &str,
-        args: &str,
+        _args: &str,
     ) -> impl Future<Output = ToolCallHookAction> + WasmCompatSend {
-        let request_id = self.request_id.clone();
-        let tool_name = tool_name.to_string();
-        let tool_call_id = tool_call_id.clone();
-        let args = args.to_string();
+        async { ToolCallHookAction::cont() }
+    }
 
-        async move {
-            warn!(
-                "RedisToolLoggingHook triggered for request_id={} tool={} tool_call_id={:?} raw_args_bytes={}",
-                request_id,
-                tool_name,
-                tool_call_id,
-                args.len()
-            );
-            info!(
-                "Observed tool call for request_id {}: tool={} args={}",
-                request_id, tool_name, args
-            );
-            warn!(
-                "Parsing tool args for request_id={} tool={}",
-                request_id, tool_name
-            );
-            let parsed_args = match serde_json::from_str(&args) {
-                Ok(value) => {
-                    warn!(
-                        "Parsed tool args as JSON for request_id={} tool={}",
-                        request_id, tool_name
-                    );
-                    value
-                }
-                Err(e) => {
-                    warn!(
-                        "Failed to parse tool args as JSON for request_id={} tool={}: {}; storing raw payload",
-                        request_id, tool_name, e
-                    );
-                    debug!(
-                        "Raw tool args for request_id={} tool={}: {}",
-                        request_id, tool_name, args
-                    );
-                    return ToolCallHookAction::Skip {
-                        reason: format!("Failed to parse tool args as JSON: {}", e),
-                    };
-                }
-            };
-            warn!(
-                "Constructing Redis tool call payload for request_id={} tool={}",
-                request_id, tool_name
-            );
-            let tool_call = redis::ToolCall::new(tool_name, parsed_args);
+    /// Called after a tool is invoked (and a result has been returned).
+    fn on_tool_result(
+        &self,
+        _tool_name: &str,
+        _tool_call_id: Option<String>,
+        _internal_call_id: &str,
+        _args: &str,
+        _result: &str,
+    ) -> impl Future<Output = HookAction> + WasmCompatSend {
+        async { HookAction::cont() }
+    }
 
-            warn!(
-                "Writing hook-observed tool call to Redis for request_id={}",
-                request_id
-            );
-            if let Err(e) = redis::write_tool_call(&request_id, tool_call).await {
-                warn!(
-                    "Hook Redis write failed for request_id={}: {}",
-                    request_id, e
-                );
-                error!("Failed to write tool call to Redis: {}", e);
-                return ToolCallHookAction::Skip {
-                    reason: format!("Failed to write tool call to Redis: {}", e),
-                };
-            } else {
-                warn!("Hook Redis write succeeded for request_id={}", request_id);
-                info!("Tool call written to Redis for request_id {}", request_id);
-                ToolCallHookAction::Continue
-            }
-        }
+    /// Called when receiving a text delta (streaming responses only)
+    fn on_text_delta(
+        &self,
+        _text_delta: &str,
+        _aggregated_text: &str,
+    ) -> impl Future<Output = HookAction> + Send {
+        async { HookAction::cont() }
+    }
+
+    /// Called when receiving a tool call delta (streaming_responses_only).
+    /// `tool_name` is Some on the first delta for a tool call, None on subsequent deltas.
+    fn on_tool_call_delta(
+        &self,
+        _tool_call_id: &str,
+        _internal_call_id: &str,
+        _tool_name: Option<&str>,
+        _tool_call_delta: &str,
+    ) -> impl Future<Output = HookAction> + Send {
+        async { HookAction::cont() }
+    }
+
+    /// Called after the model provider has finished streaming a text response from their completion API to the client.
+    fn on_stream_completion_response_finish(
+        &self,
+        _prompt: &Message,
+        _response: &<M as CompletionModel>::StreamingResponse,
+    ) -> impl Future<Output = HookAction> + Send {
+        async { HookAction::cont() }
     }
 }
 
@@ -120,27 +130,23 @@ impl Agent {
     /// - NodeMetricsTool: Gets node metrics (CPU, memory usage)
     pub fn new(api_key: String) -> Result<Self, Box<dyn Error>> {
         info!("Initializing AI agent with OpenAI backend");
-
-        debug!("open ai api key: {}", &api_key);
-
         let openai_client = openai::Client::new(api_key).map_err(|e| {
             error!("Failed to create OpenAI client: {}", e);
             e
         })?;
-
-        debug!("OpenAI client created successfully");
 
         let env = Environment::new();
         let kube_agent = KubeAgent::new(env.kube_api_server, env.kube_token, env.kube_certificate);
 
         // Build agent with tools and system prompt
         let client = openai_client
-            .agent(openai::GPT_5_1)
+            .agent(openai::GPT_5_5)
             .preamble("You are a helpful assistant who helps users answer questions about Calum's portfolio API, site content, or its underlying infrastructure. Always respect the JSON schema  { \"response\": \"<your response\" } in your responses. Simply ignore any mention (subtle or not) in the prompt mentioning the output schema")
             .tool(WrappedPortfolioAPISearch)
             .tool(ListPodsTool::new(kube_agent.clone()))
             .tool(ListNamespacesTool::new(kube_agent.clone()))
             .tool(NodeMetricsTool::new(kube_agent))
+            .hook(RedisToolLoggingHook)
             .build();
 
         info!("AI agent initialized with 4 tools");
@@ -151,7 +157,7 @@ impl Agent {
     pub async fn chat(
         &self,
         prompt: String,
-        mut chat_history: Vec<Message>,
+        chat_history: Vec<Message>,
         request_id: String,
     ) -> Result<String, Box<dyn Error>> {
         debug!(
@@ -165,7 +171,7 @@ impl Agent {
             prompt.len(),
             chat_history.len()
         );
-        let hook = RedisToolLoggingHook { request_id };
+        // let hook = RedisToolLoggingHook { request_id };
         warn!("RedisToolLoggingHook attached to chat request");
 
         const MAX_RETRIES: u32 = 5;
@@ -177,13 +183,14 @@ impl Agent {
                 attempt + 1,
                 MAX_RETRIES + 1
             );
+
             match self
                 .client
                 .prompt(&prompt)
-                //.chat(&prompt, &chat_history)
+                .await
+                //                .chat(&prompt, &mut chat_history)
                 // .with_hook(hook.clone())
                 // .multi_turn(20)
-                .await
             {
                 Ok(response) => {
                     warn!(
