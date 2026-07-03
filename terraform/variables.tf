@@ -51,3 +51,8 @@ variable "cloudflare_zone_id" {
   description = "The Cloudflare zone ID for the domain"
   type        = string
 }
+
+variable "access_policy_admin_emails" {
+  description = "List of email addresses allowed access to Zero Trust applications"
+  type        = list(string)
+}

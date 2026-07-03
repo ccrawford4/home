@@ -3,9 +3,9 @@ resource "cloudflare_zero_trust_access_policy" "home_master_k8s_api_admin" {
   name       = "Admin"
   decision   = "allow"
 
-  include = [{
+  include = [for email in var.access_policy_admin_emails : {
     email = {
-      email = "calumcrawford9@gmail.com"
+      email = email
     }
   }]
 
@@ -56,9 +56,9 @@ resource "cloudflare_zero_trust_access_policy" "atlantis_admin" {
   name       = "Atlantis Admin"
   decision   = "allow"
 
-  include = [{
+  include = [for email in var.access_policy_admin_emails : {
     email = {
-      email = "calumcrawford9@gmail.com"
+      email = email
     }
   }]
 
