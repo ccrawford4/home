@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -12,8 +11,8 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new sandbox",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := api.NewClient(apiURL)
-		sandbox, err := c.Create(context.Background())
+		c := api.NewClient(log, apiURL)
+		sandbox, err := c.Create(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("create: %w", err)
 		}

@@ -1,16 +1,25 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
+	"sandbox-cli/internal/logger"
 )
 
-var apiURL string
+var (
+	apiURL string
+	log    *slog.Logger
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "sandbox",
 	Short: "sandbox CLI — manage sandboxed execution environments",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		log = logger.New()
+		slog.SetDefault(log)
+	},
 }
 
 func Execute() {
