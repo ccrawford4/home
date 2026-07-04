@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -12,8 +11,8 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all sandboxes",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := api.NewClient(apiURL)
-		sandboxes, err := c.List(context.Background())
+		c := api.NewClient(log, apiURL)
+		sandboxes, err := c.List(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("list: %w", err)
 		}

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -13,8 +12,8 @@ var deleteCmd = &cobra.Command{
 	Short: "Delete a sandbox",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := api.NewClient(apiURL)
-		if err := c.Delete(context.Background(), args[0]); err != nil {
+		c := api.NewClient(log, apiURL)
+		if err := c.Delete(cmd.Context(), args[0]); err != nil {
 			return fmt.Errorf("delete: %w", err)
 		}
 		fmt.Printf("Deleted sandbox %s\n", args[0])

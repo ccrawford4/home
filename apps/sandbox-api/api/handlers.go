@@ -3,27 +3,57 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"sandbox-api/sandbox"
 )
 
 // Handler holds the dependencies for the HTTP handlers.
 type Handler struct {
+	log     *slog.Logger
 	Manager *sandbox.Manager
 }
 
 // NewHandler returns a new Handler.
-func NewHandler(m *sandbox.Manager) *Handler {
-	return &Handler{Manager: m}
+func NewHandler(log *slog.Logger, m *sandbox.Manager) *Handler {
+	return &Handler{log: log, Manager: m}
 }
 
 // RegisterRoutes registers the sandbox API routes on the given mux.
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /sandbox/create", h.CreateSandbox)
-	mux.HandleFunc("GET /sandbox/list", h.ListSandboxes)
-	mux.HandleFunc("GET /sandbox/{id}", h.GetSandbox)
-	mux.HandleFunc("DELETE /sandbox/{id}", h.DeleteSandbox)
+	mux.Handle("POST /sandbox/create", h.instrument("CreateSandbox", h.CreateSandbox))
+	mux.Handle("GET /sandbox/list", h.instrument("ListSandboxes", h.ListSandboxes))
+	mux.Handle("GET /sandbox/{id}", h.instrument("GetSandbox", h.GetSandbox))
+	mux.Handle("DELETE /sandbox/{id}", h.instrument("DeleteSandbox", h.DeleteSandbox))
+}
+
+func (h *Handler) instrument(operation string, next http.HandlerFunc) http.Handler {
+	return otelhttp.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		ww := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		ctx := r.Context()
+		log := h.log.With(
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.String("operation", operation),
+			slog.String("trace_id", traceID(ctx)),
+			slog.String("span_id", spanID(ctx)),
+			slog.String("remote_addr", r.RemoteAddr),
+			slog.String("user_agent", r.UserAgent()),
+		)
+
+		log.Info("request started")
+		next(ww, r.WithContext(ctx))
+		log.Info("request completed",
+			slog.Int("status", ww.statusCode),
+			slog.Duration("duration", time.Since(start)),
+		)
+	}), operation)
 }
 
 // CreateSandbox handles POST /sandbox/create.
@@ -69,4 +99,14 @@ func (h *Handler) ListSandboxes(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(list)
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *responseWriter) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
 }
