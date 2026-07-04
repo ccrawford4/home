@@ -14,3 +14,5 @@ example_request.json
 infrastructure/gar-credential-provider/gcp-credential-provider
 .env
 .claude
+apps/sandbox-api/sandbox-api
+apps/sandbox-cli/sandbox-cli
