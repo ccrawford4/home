@@ -1,3 +1,5 @@
+package main
+
 import (
 	"context"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"sandbox-api/api"
 	"sandbox-api/internal/logger"
 	"sandbox-api/internal/tracing"
+	"sandbox-api/k8s"
 	"sandbox-api/sandbox"
 )
 
@@ -36,21 +39,24 @@ func main() {
 		}
 	}()
 
-	mgr := sandbox.NewManager(log)
-	h := api.NewHandler(log, mgr)
+	mgr, err := sandbox.NewManager(&sandbox.ManagerConfig{
+		Logger: log,
+		KubeConfig: &k8s.KubeClientConfig{
+			InCluster: false,
+		},
+	})
 
-	h := api.NewHandler(mgr)
+	if err != nil {
+		log.Error("failed to create sandbox manager", "error", err)
+	}
+
+	h := api.NewHandler(log, mgr)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "ok")
 	})
 	h.RegisterRoutes(mux)
-
-	log.Info("sandbox-api listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Error("{}", err)
-	}
 
 	srv := &http.Server{
 		Addr:    ":8080",

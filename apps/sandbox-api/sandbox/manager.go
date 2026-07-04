@@ -33,6 +33,7 @@ type Manager struct {
 
 type ManagerConfig struct {
 	KubeConfig *k8s.KubeClientConfig
+	Logger     *slog.Logger
 }
 
 // NewManager returns a new Manager.
@@ -41,7 +42,9 @@ func NewManager(config *ManagerConfig) (*Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
-	return &Manager{sandboxes: make(map[string]*Sandbox), kubeclient: kubeClient}, nil
+	return &Manager{sandboxes: make(map[string]*Sandbox), kubeclient: kubeClient,
+		log: config.Logger, tracer: otel.Tracer("sandbox-manager"),
+	}, nil
 }
 
 func (m *Manager) launchSandbox(id string, sb *Sandbox) error {
@@ -62,15 +65,6 @@ func (m *Manager) launchSandbox(id string, sb *Sandbox) error {
 	m.mu.Unlock()
 	return err
 
-}
-
-// NewManager returns a new Manager.
-func NewManager(log *slog.Logger) *Manager {
-	return &Manager{
-		log:       log,
-		sandboxes: make(map[string]*Sandbox),
-		tracer:    otel.Tracer("sandbox-manager"),
-	}
 }
 
 // Create starts a new sandbox and returns it.
