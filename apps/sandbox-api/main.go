@@ -16,26 +16,26 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+"fmt"
+"log"
+"net/http"
 
-	"sandbox-api/api"
-	"sandbox-api/sandbox"
+"sandbox-api/api"
+"sandbox-api/sandbox"
 )
 
 func main() {
-	mgr := sandbox.NewManager()
-	h := api.NewHandler(mgr)
+mgr := sandbox.NewManager()
+h := api.NewHandler(mgr)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "ok")
-	})
-	h.RegisterRoutes(mux)
+mux := http.NewServeMux()
+mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+fmt.Fprintln(w, "ok")
+})
+h.RegisterRoutes(mux)
 
-	log.Println("sandbox-api listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatal(err)
-	}
+log.Println("sandbox-api listening on :8080")
+if err := http.ListenAndServe(":8080", mux); err != nil {
+log.Fatal(err)
+}
 }
