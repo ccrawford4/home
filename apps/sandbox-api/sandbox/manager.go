@@ -4,6 +4,8 @@ package sandbox
 import (
 	"context"
 	"fmt"
+	log "log/slog"
+	k8s "sandbox-api/k8s"
 	"sync"
 	"time"
 )
@@ -17,13 +19,41 @@ type Sandbox struct {
 
 // Manager handles creating, retrieving, and deleting sandboxes.
 type Manager struct {
-	mu        sync.RWMutex
-	sandboxes map[string]*Sandbox
+	mu         sync.RWMutex
+	sandboxes  map[string]*Sandbox
+	kubeclient *k8s.KubeClient
+}
+
+type ManagerConfig struct {
+	KubeConfig *k8s.KubeClientConfig
 }
 
 // NewManager returns a new Manager.
-func NewManager() *Manager {
-	return &Manager{sandboxes: make(map[string]*Sandbox)}
+func NewManager(config *ManagerConfig) (*Manager, error) {
+	kubeClient, err := k8s.NewKubeClient(config.KubeConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+	}
+	return &Manager{sandboxes: make(map[string]*Sandbox), kubeclient: kubeClient}, nil
+}
+
+func (m *Manager) launchSandbox(id string, sb *Sandbox) error {
+	// Lock the manager while we add the sandbox and kick off the corresponding job
+	m.mu.Lock()
+	m.sandboxes[id] = sb
+
+	// Launch the k8s job
+	job, err := m.kubeclient.CreateJob(&k8s.JobLaunchConfig{
+		Name:      id,
+		Namespace: "default",
+	})
+
+	// Debug log
+	log.Debug("Launched job", "job", job, "sandbox_id", id, "error", err)
+
+	// Unlock the mutex
+	m.mu.Unlock()
+	return err
 }
 
 // Create starts a new sandbox and returns it.
@@ -34,9 +64,12 @@ func (m *Manager) Create(ctx context.Context) (*Sandbox, error) {
 		Status:    "running",
 		CreatedAt: time.Now().UTC(),
 	}
-	m.mu.Lock()
-	m.sandboxes[id] = sb
-	m.mu.Unlock()
+
+	// Attempt to launch the sandbox
+	if err := m.launchSandbox(id, sb); err != nil {
+		return nil, fmt.Errorf("failed to launch sandbox: %w", err)
+	}
+
 	return sb, nil
 }
 

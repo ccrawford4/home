@@ -1,8 +1,11 @@
 package k8s
 
 import (
+	"context"
 	log "log/slog"
 
+	batchv1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -28,7 +31,7 @@ func getClusterConfig(inCluster bool) (*rest.Config, error) {
 // Creates a new KubeClient based on the provided KubeClientConfig.
 func NewKubeClient(clientConfig *KubeClientConfig) (*KubeClient, error) {
 	// Get the cluster configuration based on the clientConfig
-	clusterConfig, err := getClusterConfig(clientConfig.inCluster)
+	clusterConfig, err := getClusterConfig(clientConfig.InCluster)
 	if err != nil {
 		log.Error("Failed to get cluster configuration", err)
 		return nil, err
@@ -44,4 +47,18 @@ func NewKubeClient(clientConfig *KubeClientConfig) (*KubeClient, error) {
 	return &KubeClient{
 		clientset,
 	}, nil
+}
+
+// Create a new job
+func (kc *KubeClient) CreateJob(jobConfig *JobLaunchConfig) (*batchv1.Job, error) {
+	jobs := kc.clientset.BatchV1().Jobs(jobConfig.Namespace)
+	jobObject := createJobObject(jobConfig)
+
+	response, err := jobs.Create(context.Background(), jobObject, metav1.CreateOptions{})
+	if err != nil {
+		log.Error("Failed to create job", err)
+		return nil, err
+	}
+
+	return response, err
 }

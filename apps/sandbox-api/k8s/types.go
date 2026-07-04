@@ -9,5 +9,11 @@ type KubeClient struct {
 
 // KubeClientConfig holds the configuration for creating a KubeClient.
 type KubeClientConfig struct {
-	inCluster bool // Indicates whether the client is running inside or outside a Kubernetes cluster.
+	InCluster bool // Indicates whether the client is running inside or outside a Kubernetes cluster.
+}
+
+// The JobLaunch input params
+type JobLaunchConfig struct {
+	Name      string // The name of the job to be launched.
+	Namespace string // The namespace in which to launch the job.
 }
