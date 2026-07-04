@@ -1,28 +1,41 @@
-package sandboxapi
-
-import "fmt"
-
+// Package main is the entrypoint for the sandbox API.
+//
 // Lightweight sandbox API for executing untrusted code in secure environments.
+//
+// APIs:
+//   - POST   /sandbox/create         - create a new sandbox
+//   - GET    /sandbox/:id            - get sandbox by ID
+//   - DELETE /sandbox/:id            - delete sandbox by ID
+//   - GET    /sandbox/list           - list all sandboxes
+//
+// Package structure:
+//   - /api      -> HTTP handlers
+//   - /sandbox  -> sandbox management
+//
+// V0: Take an API call -> trigger a Kubernetes Job -> return the result
+package main
 
-// APIS:
+import (
+	"fmt"
+	"log"
+	"net/http"
 
-// sandbox create - POST /sandbox/create
+	"sandbox-api/api"
+	"sandbox-api/sandbox"
+)
 
-// sandbox get <sandbox-id> - GET /sandbox/<sandbox-id>
+func main() {
+	mgr := sandbox.NewManager()
+	h := api.NewHandler(mgr)
 
-// sandbox delete <sandbox-id> - DELETE /sandbox/<sandbox-id>
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+	h.RegisterRoutes(mux)
 
-// sandbox list - GET /sandbox/list
-
-// Main packages:
-
-// /cmd -> entrypoint
-// /api -> API endpoints
-// /sandbox -> sandbox management
-
-// V0 -> Take an API call -> trigger a K8s Job -> return the result
-
-func main() int {
-	fmt.Printf("Hello, World!\n")
-	return 0
+	log.Println("sandbox-api listening on :8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		log.Fatal(err)
+	}
 }
