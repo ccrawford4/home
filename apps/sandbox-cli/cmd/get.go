@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"sandbox-cli/internal/client"
+	"sandbox-cli/api"
 )
 
 var getCmd = &cobra.Command{
@@ -12,8 +13,8 @@ var getCmd = &cobra.Command{
 	Short: "Get details of a sandbox",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := client.New(apiURL)
-		sandbox, err := c.Get(args[0])
+		c := api.NewClient(apiURL)
+		sandbox, err := c.Get(context.Background(), args[0])
 		if err != nil {
 			return fmt.Errorf("get: %w", err)
 		}
