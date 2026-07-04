@@ -1,28 +1,14 @@
-package sandboxapi
+package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
 
-// Lightweight sandbox API for executing untrusted code in secure environments.
+	"sandbox-api/internal/api"
+)
 
-// APIS:
-
-// sandbox create - POST /sandbox/create
-
-// sandbox get <sandbox-id> - GET /sandbox/<sandbox-id>
-
-// sandbox delete <sandbox-id> - DELETE /sandbox/<sandbox-id>
-
-// sandbox list - GET /sandbox/list
-
-// Main packages:
-
-// /cmd -> entrypoint
-// /api -> API endpoints
-// /sandbox -> sandbox management
-
-// V0 -> Take an API call -> trigger a K8s Job -> return the result
-
-func main() int {
-	fmt.Printf("Hello, World!\n")
-	return 0
+func main() {
+	srv := api.NewServer()
+	log.Println("sandbox API listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", srv.Routes()))
 }
