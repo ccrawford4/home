@@ -1,1 +1,44 @@
+# Tasks
+tasks:
+  - name: hello-task
+    steps:
+      - name: echo
+        image: alpine
+        script: |
+          #/bin/sh
+          echo "Hello!"
+  - name: goodbye-task
+    params:
+      - name: username
+        type: string
+    steps:
+      - name: echo
+        image: alpine
+        script: |
+          #/bin/sh
+          echo "Goodbye, $(params.username)!"
 
+# Pipelines
+pipelines:
+  - name: hello-pipeline
+    params:
+      - name: username
+        type: string
+    tasks:
+      - name: hello-task
+        taskRef: hello-task
+      - name: goodbye-task
+        taskRef: goodbye-task
+        runAfter:
+          - hello-task
+        params:
+          - name: username
+            value: $(params.username)
+
+# PipelineRuns
+pipelineRuns:
+  - name: hello-pipeline-run
+    pipelineRef: hello-pipeline
+    params:
+      - name: username
+        value: "Tekton"
