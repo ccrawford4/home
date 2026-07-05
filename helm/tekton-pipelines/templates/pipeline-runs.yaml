@@ -1,6 +1,6 @@
-{{- range .Values.tasks }}
+{{- range .Values.pipelineRuns }}
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: {{ .name }}
@@ -8,9 +8,11 @@ metadata:
 spec:
   pipelineRef:
     name: {{ .pipelineRef }}
+{{- if .params }}
   params:
-  {{- range .params }}
+{{- range .params }}
     - name: {{ .name }}
       value: {{ .value }}
-  {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

@@ -1,16 +1,18 @@
 {{- range .Values.tasks }}
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: {{ .name }}
   namespace: tekton-pipelines
 spec:
+{{- if .params }}
   params:
     {{- range .params }}
     - name: {{ .name }}
       type: {{ .type }}
     {{- end }}
+{{- end }}
   steps:
     {{- range .steps }}
     - name: {{ .name }}
