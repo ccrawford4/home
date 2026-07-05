@@ -4,10 +4,8 @@ version:
 nameOverride:
 # fullnameOverride -- Fully override resource generated names
 fullnameOverride: ''
-
 namespace: 'pipelines'
 createNamespace: false
-
 rbac:
   # rbac.create -- Create RBAC resources
   create: true
@@ -15,7 +13,6 @@ rbac:
   controllerServiceAccount:
   # rbac.webhookServiceAccount -- Name of the service account to use for webhook when rbac.create is false
   webhookServiceAccount:
-
 podSecurityPolicy:
   # podSecurityPolicy.enabled -- Enable pod security policy
   enabled: false
@@ -185,8 +182,8 @@ controller:
   # controller.args -- Controller arguments
   # @default -- See [values.yaml](./values.yaml)
   args:
-    - -kubeconfig-writer-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.12.1
+    #    - -kubeconfig-writer-image
+    #    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.12.1
     - -creds-image
     - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/creds-init:v0.12.1
     - -git-image
