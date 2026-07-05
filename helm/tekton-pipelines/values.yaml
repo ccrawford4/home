@@ -42,3 +42,8 @@ pipelineRuns:
     params:
       - name: username
         value: "Tekton"
+  - name: hello-goodbye-pipeline-run
+    pipelineRef: hello-pipeline
+    params:
+      - name: username
+        value: "Test"
