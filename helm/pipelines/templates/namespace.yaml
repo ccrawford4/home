@@ -1,9 +1,0 @@
-{{- if .Values.createNamespace }}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ template "pipelines.namespace" . }}
-  labels:
-    {{- include "pipelines.baseLabels" . | nindent 4 }}
-    {{- include "pipelines.helmLabels" . | nindent 4 }}
-{{- end }}
