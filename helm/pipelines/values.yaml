@@ -1,5 +1,5 @@
 # version -- Tekton pipelines version used to add labels on deployments, pods and services
-version:
+version: 1.14.0
 # nameOverride -- Partially override resource generated names
 nameOverride:
 # fullnameOverride -- Fully override resource generated names
