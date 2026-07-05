@@ -52,6 +52,6 @@ spec:
       JSONPath: .status.completionTime
   # Opt into the status subresource so metadata.generation
   # starts to increment
-  subresources:
-    status: {}
+  # subresources:
+  #   status: {}
   version: v1alpha1
