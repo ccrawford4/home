@@ -1,6 +1,6 @@
 {{- range .Values.tasks }}
 ---
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
 metadata:
   name: {{ .name }}
