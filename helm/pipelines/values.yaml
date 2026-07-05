@@ -183,12 +183,12 @@ controller:
   # @default -- See [values.yaml](./values.yaml)
   args:
     #    - -kubeconfig-writer-image
-    #    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.12.1
+    #    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.14.0
 
     #    - -creds-image
-    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/creds-init:v0.12.1
+    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/creds-init:v0.14.0
     # - -git-image
-    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.12.1
+    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.14.0
     - -nop-image
     - tianon/true@sha256:009cce421096698832595ce039aa13fa44327d96beedb84282a69d3dbcf5a81b
     - -shell-image-win
@@ -196,15 +196,15 @@ controller:
     #    - -gsutil-image
     # - google/cloud-sdk@sha256:6e8676464c7581b2dc824956b112a61c95e4144642bec035e6db38e3384cae2e
     - -entrypoint-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/entrypoint:v0.12.1
+    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/entrypoint:v0.14.0
     # - -imagedigest-exporter-image
-    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/imagedigestexporter:v0.12.1
+    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/imagedigestexporter:v0.14.0
     # - -pr-image
-    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/pullrequest-init:v0.12.1
+    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/pullrequest-init:v0.14.0
     # - -build-gcs-fetcher-image
-    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/vendor/github.com/googlecloudplatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher:v0.12.1
+    # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/vendor/github.com/googlecloudplatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher:v0.14.0
     - sidecarlogresults-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/sidecarlogresults:v0.12.1
+    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/sidecarlogresults:v0.14.0
   service:
     # controller.service.type -- Controller service type
     type: ClusterIP
