@@ -14,5 +14,18 @@ spec:
     - name: {{ .name }}
       value: {{ .value }}
 {{- end }}
+{{- if .podTemplate }}
+  taskRunTemplate:
+    podTemplate:
+      {{- if .podTemplate.securityContext }}
+      securityContext:
+        {{- if .podTemplate.securityContext.runAsNonRoot }}
+        runAsNonRoot: {{ .podTemplate.securityContext.runAsNonRoot }}
+        {{- end }}
+        {{- if .podTemplate.securityContext.runAsUser }}
+        runAsUser: {{ .podTemplate.securityContext.runAsUser }}
+        {{- end }}
+    {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

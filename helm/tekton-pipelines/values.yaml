@@ -17,7 +17,6 @@ tasks:
         script: |
           #/bin/sh
           echo "Goodbye, $(params.username)!"
-
 # Pipelines
 pipelines:
   - name: hello-pipeline
@@ -34,7 +33,6 @@ pipelines:
         params:
           - name: username
             value: $(params.username)
-
 # PipelineRuns
 pipelineRuns:
   - name: hello-pipeline-run
@@ -47,3 +45,7 @@ pipelineRuns:
     params:
       - name: username
         value: "Test"
+    podTemplate:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
