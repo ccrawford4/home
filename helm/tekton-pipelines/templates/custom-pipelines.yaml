@@ -4,6 +4,7 @@ apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: {{ .name }}
+  namespace: tekton-pipelines
 spec:
   params:
     {{- range .params }}

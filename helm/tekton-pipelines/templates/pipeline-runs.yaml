@@ -4,6 +4,7 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: {{ .name }}
+  namespace: tekton-pipelines
 spec:
   pipelineRef:
     name: {{ .pipelineRef }}
