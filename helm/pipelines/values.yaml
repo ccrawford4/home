@@ -182,26 +182,27 @@ controller:
   # controller.args -- Controller arguments
   # @default -- See [values.yaml](./values.yaml)
   args:
-    #    - -kubeconfig-writer-image
-    #    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.12.1
-    - -creds-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/creds-init:v0.12.1
-    - -git-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.12.1
-    - -nop-image
-    - tianon/true@sha256:009cce421096698832595ce039aa13fa44327d96beedb84282a69d3dbcf5a81b
-    - -shell-image
-    - busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6
-    - -gsutil-image
-    - google/cloud-sdk@sha256:6e8676464c7581b2dc824956b112a61c95e4144642bec035e6db38e3384cae2e
-    - -entrypoint-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/entrypoint:v0.12.1
-    - -imagedigest-exporter-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/imagedigestexporter:v0.12.1
-    - -pr-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/pullrequest-init:v0.12.1
-    - -build-gcs-fetcher-image
-    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/vendor/github.com/googlecloudplatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher:v0.12.1
+  #    - -kubeconfig-writer-image
+  #    - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/kubeconfigwriter:v0.12.1
+
+  #    - -creds-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/creds-init:v0.12.1
+  # - -git-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.12.1
+  # - -nop-image
+  # - tianon/true@sha256:009cce421096698832595ce039aa13fa44327d96beedb84282a69d3dbcf5a81b
+  # - -shell-image
+  # - busybox@sha256:a2490cec4484ee6c1068ba3a05f89934010c85242f736280b35343483b2264b6
+  # - -gsutil-image
+  # - google/cloud-sdk@sha256:6e8676464c7581b2dc824956b112a61c95e4144642bec035e6db38e3384cae2e
+  # - -entrypoint-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/entrypoint:v0.12.1
+  # - -imagedigest-exporter-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/imagedigestexporter:v0.12.1
+  # - -pr-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/pullrequest-init:v0.12.1
+  # - -build-gcs-fetcher-image
+  # - gcr.io/tekton-releases/github.com/tektoncd/pipeline/vendor/github.com/googlecloudplatform/cloud-builders/gcs-fetcher/cmd/gcs-fetcher:v0.12.1
   service:
     # controller.service.type -- Controller service type
     type: ClusterIP
