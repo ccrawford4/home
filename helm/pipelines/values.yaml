@@ -165,7 +165,8 @@ config:
 controller:
   image:
     # controller.image.repository -- Controller docker image repository
-    repository: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/controller
+#    repository: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/controller
+    repository: ghcr.io/tektoncd/github.com/tektoncd/pipeline/cmd/controller
     # controller.image.tag -- Controller docker image tag
     tag:
     # controller.image.pullPolicy -- Controller docker image pull policy
