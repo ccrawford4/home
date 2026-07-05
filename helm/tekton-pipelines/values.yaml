@@ -44,7 +44,7 @@ pipelineRuns:
     pipelineRef: hello-pipeline
     params:
       - name: username
-        value: "Test"
+        value: "Tekton Test"
     podTemplate:
       securityContext:
         runAsNonRoot: true
