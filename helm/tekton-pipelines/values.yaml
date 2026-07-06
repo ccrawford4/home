@@ -56,9 +56,6 @@ pipelineRuns:
         value: "Tekton Test 1"
     podTemplate:
       securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
         runAsNonRoot: true
         runAsUser: 1001
         seccompProfile:
@@ -70,9 +67,6 @@ pipelineRuns:
         value: "Tekton Test 2"
     podTemplate:
       securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
         runAsNonRoot: true
         runAsUser: 1001
         seccompProfile:
