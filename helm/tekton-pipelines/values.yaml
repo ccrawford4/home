@@ -1,6 +1,10 @@
 # Tasks
 tasks:
   - name: hello-task
+    stepTemplate:
+      securityContext:
+        capabilities:
+          drop: ["ALL"]
     steps:
       - name: echo
         image: alpine
@@ -8,6 +12,10 @@ tasks:
           #/bin/sh
           echo "Hello!"
   - name: goodbye-task
+    stepTemplate:
+      securityContext:
+        capabilities:
+          drop: ["ALL"]
     params:
       - name: username
         type: string
@@ -40,6 +48,11 @@ pipelineRuns:
     params:
       - name: username
         value: "Tekton"
+    podTemplate:
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 1001
   - name: hello-goodbye-pipeline-run
     pipelineRef: hello-pipeline
     params:
@@ -50,5 +63,3 @@ pipelineRuns:
         allowPrivilegeEscalation: false
         runAsNonRoot: true
         runAsUser: 1001
-        capabilities:
-          drop: ["ALL"]

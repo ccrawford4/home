@@ -6,6 +6,10 @@ metadata:
   name: {{ .name }}
   namespace: tekton-pipelines
 spec:
+{{- if .stepTemplate }}
+  stepTemplate:
+    {{- toYaml .stepTemplate | nindent 4 }}
+{{- end }}
 {{- if .params }}
   params:
     {{- range .params }}
