@@ -113,3 +113,23 @@ module "atlantis-secrets" {
   google_service_account_email = var.secrets_manager_sa_email
   workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
 }
+
+module "tekton-secrets" {
+  source         = "./modules/secrets_core"
+  project_id     = var.project_id
+  project_number = var.project_number
+  region         = var.region
+
+  label               = "tekton-pipelines"
+  k8s_namespace       = "tekton-pipelines"
+  k8s_service_account = var.secrets_manager_sa_id
+
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
+  workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
+
+  secrets = [
+    # GitHub webhook secrets
+    "tekton-pipelines-github-token",
+  ]
+}
