@@ -71,3 +71,51 @@ pipelineRuns:
         runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
+
+# Shared namespace for the Tekton resources rendered by this chart.
+namespace: tekton-pipelines
+
+# Listeners
+listeners:
+  - name: home-apps-builder
+    serviceAccountName: tekton-triggers-controller
+    triggerGroups:
+      - name: github-pr-group
+        interceptors:
+          - name: "validate GitHub payload and filter on eventType"
+            ref:
+              name: "github"
+            params:
+              - name: "secretRef"
+                value:
+                  secretName: github-secret
+                  secretKey: secretToken
+              - name: "eventTypes"
+                value: ["pull_request"]
+          - name: "only when PRs are opened"
+            ref:
+              name: "cel"
+            params:
+              - name: "filter"
+                value: "body.action in ['opened', 'synchronize', 'reopened']"
+        triggerSelector:
+          labelSelector:
+            matchLabels:
+              type: github-pr
+
+# ClusterSecretStores
+clusterSecretStores:
+  - name: cluster-secret-store
+    projectID: "home-473419"
+    secretName: gcp-sa-secret
+    secretKey: secret-access-credentials
+    secretNamespace: default
+
+# Secrets
+secretsConfig:
+  clusterSecretStoreName: cluster-secret-store
+  secrets:
+    - name: github-secret
+      data:
+        - secretKey: secretToken
+          remoteRefKey: tekton-pipelines-github-token

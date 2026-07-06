@@ -1,0 +1,22 @@
+{{- range .Values.listeners }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  serviceAccountName: {{ .serviceAccountName | default "tekton-triggers-controller" }}
+  {{- with .triggers }}
+  triggers:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .triggerGroups }}
+  triggerGroups:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
