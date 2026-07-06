@@ -3,8 +3,11 @@ tasks:
   - name: hello-task
     stepTemplate:
       securityContext:
+        allowPrivilegeEscalation: false
         capabilities:
           drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
     steps:
       - name: echo
         image: alpine
@@ -14,8 +17,11 @@ tasks:
   - name: goodbye-task
     stepTemplate:
       securityContext:
+        allowPrivilegeEscalation: false
         capabilities:
           drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
     params:
       - name: username
         type: string
@@ -51,8 +57,12 @@ pipelineRuns:
     podTemplate:
       securityContext:
         allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
         runAsNonRoot: true
         runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
   - name: hello-goodbye-pipeline-run
     pipelineRef: hello-pipeline
     params:
@@ -61,5 +71,9 @@ pipelineRuns:
     podTemplate:
       securityContext:
         allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
         runAsNonRoot: true
         runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault

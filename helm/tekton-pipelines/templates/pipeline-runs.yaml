@@ -19,23 +19,8 @@ spec:
     podTemplate:
       {{- if .podTemplate.securityContext }}
       securityContext:
-        {{- if .podTemplate.securityContext.allowPrivilegeEscalation }}
-        allowPrivilegeEscalation: {{ .podTemplate.securityContext.allowPrivilegeEscalation }}
-        {{- end }}
-        {{- if .podTemplate.securityContext.runAsNonRoot }}
-        runAsNonRoot: {{ .podTemplate.securityContext.runAsNonRoot }}
-        {{- end }}
-        {{- if .podTemplate.securityContext.runAsUser }}
-        runAsUser: {{ .podTemplate.securityContext.runAsUser }}
-        {{- end }}
-        {{- if .podTemplate.securityContext.capabilities }}
-        capabilities:
-          drop:
-          {{- range .podTemplate.securityContext.capabilities.drop }}
-            - {{ . }}
-          {{- end }}
-        {{- end }}
-    {{- end }}
+{{- toYaml .podTemplate.securityContext | nindent 8 }}
+      {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
