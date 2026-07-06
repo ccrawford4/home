@@ -28,13 +28,13 @@ spec:
         {{- if .podTemplate.securityContext.runAsUser }}
         runAsUser: {{ .podTemplate.securityContext.runAsUser }}
         {{- end }}
-        # {{- if .podTemplate.securityContext.capabilities }}
-        # capabilities:
-        #   drop:
-        #   {{- range .podTemplate.securityContext.capabilities.drop }}
-        #     - {{ . }}
-        #   {{- end }}
-        # {{- end }}
+        {{- if .podTemplate.securityContext.capabilities }}
+        capabilities:
+          drop:
+          {{- range .podTemplate.securityContext.capabilities.drop }}
+            - {{ . }}
+          {{- end }}
+        {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}
