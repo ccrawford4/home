@@ -47,5 +47,6 @@ pipelineRuns:
         value: "Tekton Test"
     podTemplate:
       securityContext:
+        allowPrivilegeEscalation: false
         runAsNonRoot: true
         runAsUser: 1001
