@@ -47,7 +47,7 @@ pipelineRuns:
     pipelineRef: hello-pipeline
     params:
       - name: username
-        value: "Tekton"
+        value: "Tekton Test 1"
     podTemplate:
       securityContext:
         allowPrivilegeEscalation: false
@@ -57,7 +57,7 @@ pipelineRuns:
     pipelineRef: hello-pipeline
     params:
       - name: username
-        value: "Tekton Test"
+        value: "Tekton Test 2"
     podTemplate:
       securityContext:
         allowPrivilegeEscalation: false
