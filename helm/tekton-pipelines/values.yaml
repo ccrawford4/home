@@ -119,3 +119,32 @@ secretsConfig:
       data:
         - secretKey: secretToken
           remoteRefKey: tekton-pipelines-github-token
+
+# Roles
+roles:
+  - name: tekton-triggers-createwebhook
+    rules:
+      - apiGroups: [""]
+        resources: ["secrets"]
+        verbs: ["get", "list", "create", "update", "delete"]
+      - apiGroups: ["triggers.tekton.dev"]
+        resources: ["eventlisteners"]
+        verbs: ["get", "list", "create", "update", "delete"]
+      - apiGroups: ["extensions", "networking.k8s.io"]
+        resources: ["ingresses"]
+        verbs: ["get", "list", "create", "update", "delete"]
+
+# Service Accounts
+serviceAccounts:
+  - name: tekton-triggers-createwebhook
+
+# Role Bindings
+roleBindings:
+  - name: tekton-triggers-createwebhook
+    subjects:
+      - kind: ServiceAccount
+        name: tekton-triggers-createwebhook
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: tekton-triggers-createwebhook
