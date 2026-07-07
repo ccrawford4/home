@@ -1,27 +1,56 @@
 {{- range .Values.tasks }}
 ---
-apiVersion: tekton.dev/v1
+apiVersion: {{ .apiVersion | default "tekton.dev/v1" }}
 kind: Task
 metadata:
   name: {{ .name }}
-  namespace: tekton-pipelines
+  namespace: {{ $.Values.namespace }}
 spec:
+  {{- with .volumes }}
+  volumes:
+{{ toYaml . | nindent 4 }}
+  {{- end }}
 {{- if .stepTemplate }}
   stepTemplate:
-    {{- toYaml .stepTemplate | nindent 4 }}
+{{- toYaml .stepTemplate | nindent 4 }}
 {{- end }}
 {{- if .params }}
   params:
-    {{- range .params }}
+{{- range .params }}
     - name: {{ .name }}
-      type: {{ .type }}
-    {{- end }}
+{{- with .description }}
+      description: {{ . | quote }}
+{{- end }}
+{{- with .default }}
+      default: {{ . | quote }}
+{{- end }}
+{{- with .type }}
+      type: {{ . }}
+{{- end }}
+{{- end }}
 {{- end }}
   steps:
-    {{- range .steps }}
+{{- range .steps }}
     - name: {{ .name }}
       image: {{ .image }}
+{{- with .volumeMounts }}
+      volumeMounts:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .workingDir }}
+      workingDir: {{ . }}
+{{- end }}
+{{- with .command }}
+      command:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .args }}
+      args:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .script }}
       script: |
-{{ .script | indent 10 }}
-    {{- end }}
+{{ . | indent 8 }}
+{{- end }}
+{{- end }}
 {{- end }}

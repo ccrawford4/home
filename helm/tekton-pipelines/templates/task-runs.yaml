@@ -1,0 +1,24 @@
+{{- range .Values.taskRuns }}
+---
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  taskRef:
+    name: {{ .taskRef.name }}
+  {{- if .params }}
+  params:
+    {{- range .params }}
+    - name: {{ .name }}
+      value: {{ .value | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if .timeout }}
+  timeout: {{ .timeout }}
+  {{- end }}
+  {{- if .serviceAccountName }}
+  serviceAccountName: {{ .serviceAccountName }}
+  {{- end }}
+{{- end }}

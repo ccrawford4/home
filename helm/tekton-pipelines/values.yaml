@@ -1,80 +1,271 @@
 # Tasks
 tasks:
-  - name: hello-task
-    stepTemplate:
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seccompProfile:
-          type: RuntimeDefault
-    steps:
-      - name: echo
-        image: alpine
-        script: |
-          #/bin/sh
-          echo "Hello!"
-  - name: goodbye-task
-    stepTemplate:
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seccompProfile:
-          type: RuntimeDefault
+  - name: build-docker-image
     params:
-      - name: username
-        type: string
+      - name: IMAGE
+        description: Name (reference) of the image to build.
+      - name: pathToContext
+        description: Path to the build context.
+        default: ./
+      - name: pathToDockerfile
+        description: Path to the Dockerfile.
+        default: ./Dockerfile
+    workspaces:
+      - name: source
     steps:
-      - name: echo
-        image: alpine
-        script: |
-          #/bin/sh
-          echo "Goodbye, $(params.username)!"
+      - name: build-and-push
+        workingDir: $(workspaces.source.path)
+        image: gcr.io/kaniko-project/executor:v0.16.0
+        command:
+          - /kaniko/executor
+        args:
+          - --dockerfile=$(params.pathToDockerfile)
+          - --destination=$(params.IMAGE)
+          - --context=$(workspaces.source.path)/$(params.pathToContext)
+  - name: create-ingress
+    apiVersion: tekton.dev/v1beta1
+    volumes:
+      - name: work
+        emptyDir: {}
+    params:
+      - name: CreateCertificate
+        description: "Enables/disables the creation of a self-signed certificate for $(params.ExternalDomain)"
+        default: "true"
+      - name: CertificateKeyPassphrase
+        description: "Phrase that protects private key. This must be provided when the self-signed certificate is created"
+      - name: CertificateSecretName
+        description: "Secret name for Ingress certificate. The Secret should not exist if the self-signed certificate creation is enabled"
+      - name: ExternalDomain
+        description: "The external domain for the EventListener e.g. `$(params.EventListenerName).PROXYIP.nip.io`"
+      - name: Service
+        description: "The name of the Service used in the Ingress. This will also be the name of the Ingress."
+      - name: ServicePort
+        description: "The service port that the ingress is being created on"
+      - name: ServiceUID
+        description: "The uid of the service. If set, this creates an owner reference on the service"
+        default: ""
+    steps:
+      - name: generate-certificate
+        image: frapsoft/openssl
+        volumeMounts:
+          - name: work
+            mountPath: /var/tmp/work
+        command:
+          - sh
+        args:
+          - -ce
+          - |
+            set -e
+            cat <<EOF | sh
+            #!/bin/sh
+            if [ $(params.CreateCertificate) = "false" ];then
+              exit 0
+            fi
+            mkdir /var/tmp/work/ingress
+            openssl genrsa -des3 -out /var/tmp/work/ingress/key.pem -passout pass:$(params.CertificateKeyPassphrase) 2048
+            openssl req -x509 -new -nodes -key /var/tmp/work/ingress/key.pem -sha256 -days 1825 -out /var/tmp/work/ingress/certificate.pem -passin pass:$(params.CertificateKeyPassphrase) -subj /CN=$(params.ExternalDomain)
+            openssl rsa -in /var/tmp/work/ingress/key.pem -out /var/tmp/work/ingress/key.pem -passin pass:$(params.CertificateKeyPassphrase)
+            EOF
+      - name: create-certificate-secret
+        image: lachlanevenson/k8s-kubectl:latest
+        volumeMounts:
+          - name: work
+            mountPath: /var/tmp/work
+        command:
+          - sh
+        args:
+          - -ce
+          - |
+            set -e
+            cat <<EOF | sh
+            #!/bin/sh
+            if [ $(params.CreateCertificate) = "false" ];then
+              exit 0
+            fi
+            kubectl create secret tls $(params.CertificateSecretName) --cert=/var/tmp/work/ingress/certificate.pem --key=/var/tmp/work/ingress/key.pem || true
+            EOF
+      - name: create-ingress
+        image: lachlanevenson/k8s-kubectl:latest
+        command:
+          - sh
+        args:
+          - -ce
+          - |
+            set -e
+            if [ -n "$(params.ServiceUID)" ];then
+              cat <<EOF | kubectl create -f - || true
+              apiVersion: networking.k8s.io/v1
+              kind: Ingress
+              metadata:
+                name: $(params.Service)
+                ownerReferences:
+                - name: $(params.Service)
+                  apiVersion: v1
+                  kind: Service
+                  uid: $(params.ServiceUID)
+              spec:
+                tls:
+                - secretName: $(params.CertificateSecretName)
+                  hosts:
+                  - $(params.ExternalDomain)
+                rules:
+                - host: $(params.ExternalDomain)
+                  http:
+                    paths:
+                    - pathType: ImplementationSpecific
+                      backend:
+                        service:
+                          name: $(params.Service)
+                          port:
+                            number: $(params.ServicePort)
+              EOF
+            else
+              cat <<EOF | kubectl create -f - || true
+              apiVersion: networking.k8s.io/v1
+              kind: Ingress
+              metadata:
+                name: $(params.Service)
+              spec:
+                tls:
+                - secretName: $(params.CertificateSecretName)
+                  hosts:
+                  - $(params.ExternalDomain)
+                rules:
+                - host: $(params.ExternalDomain)
+                  http:
+                    paths:
+                    - pathType: ImplementationSpecific
+                      backend:
+                        service:
+                          name: $(params.Service)
+                          port:
+                            number: $(params.ServicePort)
+              EOF
+            fi
+  - name: create-webhook
+    apiVersion: tekton.dev/v1beta1
+    volumes:
+      - name: github-secret
+        secret:
+          secretName: github-secret
+
+    params:
+      - name: ExternalDomain
+        description: "The external domain for the EventListener e.g. `$(params.EventListenerName).<PROXYIP>.nip.io`"
+      - name: GitHubUser
+        description: "The GitHub user"
+      - name: GitHubRepo
+        description: "The GitHub repo where the webhook will be created"
+      - name: GitHubOrg
+        description: "The GitHub organization where the webhook will be created"
+      - name: GitHubAccessTokenKey
+        description: "The GitHub access token key name"
+      - name: GitHubSecretStringKey
+        description: "The GitHub secret string key name"
+      - name: GitHubDomain
+        description: "The GitHub domain. Override for GitHub Enterprise"
+        default: "github.com"
+      - name: WebhookEvents
+        description: "List of events the webhook will send notifications for"
+        default: '["push","pull_request"]'
+    steps:
+      - name: create-webhook
+        image: curlimages/curl:latest
+        volumeMounts:
+          - name: github-secret
+            mountPath: /var/secret
+        command:
+          - sh
+        args:
+          - -ce
+          - |
+            set -e
+            echo "Create Webhook"
+            if [ $(params.GitHubDomain) = "github.com" ];then
+              curl -v -d "{\"name\": \"web\",\"active\": true,\"events\": $(params.WebhookEvents),\"config\": {\"url\": \"https://$(params.ExternalDomain)\",\"content_type\": \"json\",\"insecure_ssl\": \"1\" ,\"secret\": \"$(cat /var/secret/$(params.GitHubSecretStringKey))\"}}" -X POST -u $(params.GitHubUser):$(cat /var/secret/$(params.GitHubAccessTokenKey)) -L https://api.github.com/repos/$(params.GitHubOrg)/$(params.GitHubRepo)/hooks
+            else
+              curl -d "{\"name\": \"web\",\"active\": true,\"events\": $(params.WebhookEvents),\"config\": {\"url\": \"https://$(params.ExternalDomain)/\",\"content_type\": \"json\",\"insecure_ssl\": \"1\" ,\"secret\": \"$(cat /var/secret/$(params.GitHubSecretStringKey))\"}}" -X POST -u $(params.GitHubUser):$(cat /var/secret/$(params.GitHubAccessTokenKey)) -L https://$(params.GitHubDomain)/api/v3/repos/$(params.GitHubOrg)/$(params.GitHubRepo)/hooks
+            fi
+
 # Pipelines
 pipelines:
-  - name: hello-pipeline
+  - name: build-and-deploy-pipeline
     params:
-      - name: username
-        type: string
+      - name: git-url
+      - name: git-revision
+      - name: url
+    workspaces:
+      - name: git-source
     tasks:
-      - name: hello-task
-        taskRef: hello-task
-      - name: goodbye-task
-        taskRef: goodbye-task
-        runAfter:
-          - hello-task
+      - name: fetch-from-git
+        taskRef:
+          resolver: git
+          params:
+            - name: url
+              value: https://github.com/ccrawford4/home.git
+            - name: pathInRepo
+              value: infrastructure/ci/task.yaml
+            - name: revision
+              value: main
         params:
-          - name: username
-            value: $(params.username)
+          - name: url
+            value: $(params.git-url)
+          - name: revision
+            value: $(params.git-revision)
+        workspaces:
+          - name: output
+            workspace: git-source
+      - name: build-docker-image
+        taskRef: build-docker-image
+        params:
+          - name: IMAGE
+            value: $(params.url)
+        runAfter: [fetch-from-git]
+        workspaces:
+          - name: source
+            workspace: git-source
+            # TODO: Add a task to publish the image to GAR, then auto-sync the argocd apps
 # PipelineRuns
 pipelineRuns:
-  - name: hello-pipeline-run
-    pipelineRef: hello-pipeline
+  - name: sample-build-pipeline-run-1
+    pipelineRef: build-and-deploy-pipeline
     params:
-      - name: username
-        value: "Tekton Test 1"
+      - name: git-url
+        value: https://github.com/ccrawford4/home.git
+      - name: git-revision
+        value: main
+      - name: url
+        value: us-central1-docker.pkg.dev/home-473419/internal
     podTemplate:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
-  - name: hello-goodbye-pipeline-run
-    pipelineRef: hello-pipeline
+
+# TaskRuns
+taskRuns:
+  - name: create-ingress-run
+    taskRef:
+      name: create-ingress
     params:
-      - name: username
-        value: "Tekton Test 2"
-    podTemplate:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
-        seccompProfile:
-          type: RuntimeDefault
+      - name: CreateCertificate
+        value: "true"
+      - name: CertificateKeyPassphrase
+        value: asecretphrase
+      - name: CertificateSecretName
+        value: ingresssecret
+      - name: ExternalDomain
+        value: getting-started.iancoffey.com
+      - name: Service
+        value: getting-started
+      - name: ServicePort
+        value: "8080"
+    timeout: 1000s
+    serviceAccountName: tekton-triggers-createwebhook
 
 # Shared namespace for the Tekton resources rendered by this chart.
 namespace: tekton-pipelines
-
 # Listeners
 listeners:
   - name: home-apps-builder
@@ -102,7 +293,13 @@ listeners:
           labelSelector:
             matchLabels:
               type: github-pr
-
+  - name: home-apps-builder-branch
+    serviceAccountName: tekton-triggers
+    triggers:
+      - bindings:
+          - ref: home-apps-builder-trigger-binding
+        template:
+          ref: home-apps-builder-trigger
 # ClusterSecretStores
 clusterSecretStores:
   - name: cluster-secret-store
@@ -110,7 +307,6 @@ clusterSecretStores:
     secretName: gcp-sa-secret
     secretKey: secret-access-credentials
     secretNamespace: default
-
 # Secrets
 secretsConfig:
   clusterSecretStoreName: cluster-secret-store
@@ -119,7 +315,6 @@ secretsConfig:
       data:
         - secretKey: secretToken
           remoteRefKey: tekton-pipelines-github-token
-
 # Roles
 roles:
   - name: tekton-triggers-createwebhook
@@ -133,11 +328,10 @@ roles:
       - apiGroups: ["extensions", "networking.k8s.io"]
         resources: ["ingresses"]
         verbs: ["get", "list", "create", "update", "delete"]
-
 # Service Accounts
 serviceAccounts:
   - name: tekton-triggers-createwebhook
-
+  - name: tekton-triggers
 # Role Bindings
 roleBindings:
   - name: tekton-triggers-createwebhook
@@ -148,3 +342,68 @@ roleBindings:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
       name: tekton-triggers-createwebhook
+  - name: tekton-triggers-eventlistener-binding
+    subjects:
+      - kind: ServiceAccount
+        name: tekton-triggers
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: tekton-triggers
+# Cluster Role Bindings
+clusterRoleBindings:
+  - name: tekton-triggers-eventlistener-clusterbinding
+    subjects:
+      - kind: ServiceAccount
+        name: tekton-triggers
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: tekton-triggers
+# Trigger Templates
+triggerTemplates:
+  - name: home-apps-builder-trigger
+    params:
+      - name: gitrevision
+        description: The git revision
+        default: master
+      - name: gitrepositoryurl
+        description: The git repository url
+      - name: namespace
+        description: The namespace to create the resources
+    resourcetemplates:
+      - apiVersion: tekton.dev/v1beta1
+        kind: PipelineRun
+        metadata:
+          generateName: home-apps-builder-trigger-
+          namespace: $(tt.params.namespace)
+        spec:
+          serviceAccountName: tekton-triggers
+          pipelineRef:
+            name: build-and-deploy-pipeline
+          params:
+            - name: git-revision
+              value: $(tt.params.gitrevision)
+            - name: git-url
+              value: $(tt.params.gitrepositoryurl)
+            - name: url
+              value: us-central1-docker.pkg.dev/home-473419/internal
+          workspaces:
+            - name: git-source
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+# Trigger Bindings
+triggerBindings:
+  - name: home-apps-builder-trigger-binding
+    params:
+      - name: gitrevision
+        value: $(body.head_commit.id)
+      - name: namespace
+        value: $(context.namespace)
+      - name: gitrepositoryurl
+        value: "https://github.com/$(body.repository.full_name)"

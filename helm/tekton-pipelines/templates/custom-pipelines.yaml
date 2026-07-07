@@ -10,14 +10,20 @@ spec:
   params:
     {{- range .params }}
     - name: {{ .name }}
-      type: {{ .type }}
+      {{- with .type }}
+      type: {{ . }}
+      {{- end }}
     {{- end }}
 {{- end }}
   tasks:
     {{- range .tasks }}
     - name: {{ .name }}
       taskRef:
+        {{- if kindIs "map" .taskRef }}
+{{- toYaml .taskRef | nindent 8 }}
+        {{- else }}
         name: {{ .taskRef }}
+        {{- end }}
       {{- if .params }}
       params:
         {{- range .params }}

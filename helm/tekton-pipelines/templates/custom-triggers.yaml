@@ -1,0 +1,34 @@
+{{- /* Render user-defined TriggerTemplates and TriggerBindings from values.yaml */ -}}
+{{- if .Values.triggerTemplates }}
+{{- range .Values.triggerTemplates }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  {{- if .params }}
+  params:
+{{ toYaml .params | nindent 4 }}
+  {{- end }}
+  {{- if .resourcetemplates }}
+  resourcetemplates:
+{{ toYaml .resourcetemplates | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.triggerBindings }}
+{{- range .Values.triggerBindings }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+{{ toYaml .params | nindent 4 }}
+{{- end }}
+{{- end }}
