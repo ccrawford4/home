@@ -148,7 +148,6 @@ tasks:
       - name: github-secret
         secret:
           secretName: github-secret
-
     params:
       - name: ExternalDomain
         description: "The external domain for the EventListener e.g. `$(params.EventListenerName).<PROXYIP>.nip.io`"
@@ -186,7 +185,6 @@ tasks:
             else
               curl -d "{\"name\": \"web\",\"active\": true,\"events\": $(params.WebhookEvents),\"config\": {\"url\": \"https://$(params.ExternalDomain)/\",\"content_type\": \"json\",\"insecure_ssl\": \"1\" ,\"secret\": \"$(cat /var/secret/$(params.GitHubSecretStringKey))\"}}" -X POST -u $(params.GitHubUser):$(cat /var/secret/$(params.GitHubAccessTokenKey)) -L https://$(params.GitHubDomain)/api/v3/repos/$(params.GitHubOrg)/$(params.GitHubRepo)/hooks
             fi
-
 # Pipelines
 pipelines:
   - name: build-and-deploy-pipeline
@@ -242,7 +240,6 @@ pipelineRuns:
         runAsUser: 1001
         seccompProfile:
           type: RuntimeDefault
-
 # TaskRuns
 taskRuns:
   - name: create-ingress-run
@@ -262,8 +259,7 @@ taskRuns:
       - name: ServicePort
         value: "8080"
     timeout: 1000s
-    serviceAccountName: tekton-triggers-createwebhook
-
+    serviceAccountName: tekton-triggers
 # Shared namespace for the Tekton resources rendered by this chart.
 namespace: tekton-pipelines
 # Listeners
@@ -317,7 +313,7 @@ secretsConfig:
           remoteRefKey: tekton-pipelines-github-token
 # Roles
 roles:
-  - name: tekton-triggers-createwebhook
+  - name: tekton-triggers
     rules:
       - apiGroups: [""]
         resources: ["secrets"]
@@ -330,18 +326,17 @@ roles:
         verbs: ["get", "list", "create", "update", "delete"]
 # Service Accounts
 serviceAccounts:
-  - name: tekton-triggers-createwebhook
   - name: tekton-triggers
 # Role Bindings
 roleBindings:
-  - name: tekton-triggers-createwebhook
+  - name: tekton-triggers
     subjects:
       - kind: ServiceAccount
-        name: tekton-triggers-createwebhook
+        name: tekton-triggers
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
-      name: tekton-triggers-createwebhook
+      name: tekton-triggers
   - name: tekton-triggers-eventlistener-binding
     subjects:
       - kind: ServiceAccount
