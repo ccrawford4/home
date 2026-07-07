@@ -258,6 +258,8 @@ taskRuns:
         value: getting-started
       - name: ServicePort
         value: "8080"
+      - name: ServiceUID
+        value: "1001"
     timeout: 1000s
     serviceAccountName: tekton-triggers
 # Shared namespace for the Tekton resources rendered by this chart.
