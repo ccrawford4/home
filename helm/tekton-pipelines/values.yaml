@@ -1,6 +1,13 @@
 # Tasks
 tasks:
   - name: build-docker-image
+    stepTemplate:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
     params:
       - name: IMAGE
         description: Name (reference) of the image to build.
