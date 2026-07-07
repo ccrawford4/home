@@ -4,7 +4,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{ .name }}
-  namespace: {{ $.Values.namespace }}
 subjects:
   {{- range .subjects }}
   - kind: {{ .kind }}

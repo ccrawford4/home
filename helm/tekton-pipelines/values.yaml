@@ -348,8 +348,8 @@ roleBindings:
         name: tekton-triggers
     roleRef:
       apiGroup: rbac.authorization.k8s.io
-      kind: Role
-      name: tekton-triggers
+      kind: ClusterRole
+      name: tekton-triggers-eventlistener-roles
 # Cluster Role Bindings
 clusterRoleBindings:
   - name: tekton-triggers-eventlistener-clusterbinding
@@ -358,8 +358,8 @@ clusterRoleBindings:
         name: tekton-triggers
     roleRef:
       apiGroup: rbac.authorization.k8s.io
-      kind: Role
-      name: tekton-triggers
+      kind: ClusterRole
+      name: tekton-triggers-eventlistener-clusterroles
 # Trigger Templates
 triggerTemplates:
   - name: home-apps-builder-trigger
