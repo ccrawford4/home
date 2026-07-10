@@ -15,6 +15,15 @@ spec:
       {{- end }}
     {{- end }}
 {{- end }}
+{{- if .workspaces }}
+  workspaces:
+    {{- range .workspaces }}
+    - name: {{ .name }}
+      {{- with .description }}
+      description: {{ . | quote }}
+      {{- end }}
+    {{- end }}
+{{- end }}
   tasks:
     {{- range .tasks }}
     - name: {{ .name }}
@@ -29,6 +38,15 @@ spec:
         {{- range .params }}
         - name: {{ .name }}
           value: {{ .value }}
+        {{- end }}
+      {{- end }}
+      {{- if .workspaces }}
+      workspaces:
+        {{- range .workspaces }}
+        - name: {{ .name }}
+          {{- with .workspace }}
+          workspace: {{ . }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}

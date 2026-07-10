@@ -29,6 +29,15 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .workspaces }}
+  workspaces:
+{{- range .workspaces }}
+    - name: {{ .name }}
+{{- with .description }}
+      description: {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
   steps:
 {{- range .steps }}
     - name: {{ .name }}

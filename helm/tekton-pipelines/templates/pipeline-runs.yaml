@@ -14,6 +14,23 @@ spec:
     - name: {{ .name }}
       value: {{ .value }}
 {{- end }}
+{{- if .workspaces }}
+  workspaces:
+    {{- range .workspaces }}
+    - name: {{ .name }}
+      {{- if .emptyDir }}
+      emptyDir: {{ .emptyDir }}
+      {{- end }}
+      {{- if .persistentVolumeClaim }}
+      persistentVolumeClaim:
+{{ toYaml .persistentVolumeClaim | nindent 8 }}
+      {{- end }}
+      {{- if .volumeClaimTemplate }}
+      volumeClaimTemplate:
+{{ toYaml .volumeClaimTemplate | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}
 {{- if .podTemplate }}
   taskRunTemplate:
     podTemplate:

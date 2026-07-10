@@ -241,6 +241,9 @@ pipelineRuns:
         value: main
       - name: url
         value: us-central1-docker.pkg.dev/home-473419/internal
+    workspaces:
+      - name: git-source
+        emptyDir: {}
     podTemplate:
       securityContext:
         runAsNonRoot: true
