@@ -15,7 +15,6 @@ namespaces:
             pathType: Prefix
             serviceName: argocd-server
             servicePort: 80
-
   portfolio:
     rules:
       - host: about.calum.sh
@@ -24,7 +23,6 @@ namespaces:
             pathType: Prefix
             serviceName: portfolio
             servicePort: 3000
-
   openid-server:
     rules:
       - host: openid.calum.sh
@@ -41,7 +39,6 @@ namespaces:
             pathType: Prefix
             serviceName: ollama
             servicePort: 11434
-
   atlantis:
     rules:
       - host: atlantis.calum.sh
@@ -50,3 +47,11 @@ namespaces:
             pathType: Prefix
             serviceName: atlantis
             servicePort: 80
+  tekton-pipelines:
+    rules:
+      - host: ci.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: el-home-apps-builder
+            serviceport: 8080
