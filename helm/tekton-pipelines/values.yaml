@@ -1,5 +1,12 @@
 # Tasks
 tasks:
+  # - name: home-apps-builder-branch
+  #   serviceAccountName: tekton-triggers
+  #   triggers:
+  #     - bindings:
+  #         - ref: home-apps-builder-trigger-binding
+  #       template:
+  #         ref: home-apps-builder-trigger
   - name: build-docker-image
     stepTemplate:
       securityContext:
@@ -301,13 +308,16 @@ listeners:
           labelSelector:
             matchLabels:
               type: github-pr
+# Triggers
+triggers:
   - name: home-apps-builder-branch
     serviceAccountName: tekton-triggers
-    triggers:
-      - bindings:
-          - ref: home-apps-builder-trigger-binding
-        template:
-          ref: home-apps-builder-trigger
+    labels:
+      type: github-pr
+    bindings:
+      - ref: home-apps-builder-trigger-binding
+    template:
+      ref: home-apps-builder-trigger
 # ClusterSecretStores
 clusterSecretStores:
   - name: cluster-secret-store

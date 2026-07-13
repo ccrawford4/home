@@ -32,3 +32,30 @@ spec:
 {{ toYaml .params | nindent 4 }}
 {{- end }}
 {{- end }}
+
+{{- if .Values.triggers }}
+{{- range .Values.triggers }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  {{- with .labels }}
+  labels:
+    {{- toYaml . | nindent 4}}
+  {{- end }}
+spec:
+  {{- with .serviceAccountName }}
+  serviceAccountName: {{ . }}
+  {{- end }}
+  {{- if .bindings }}
+  bindings:
+    {{- toYaml .bindings | nindent 4}}
+  {{- end }}
+  {{- if .template }}
+  template:
+    {{- toYaml .template | nindent 4}}
+  {{- end }}
+{{- end }}
+{{- end }}
