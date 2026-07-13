@@ -419,7 +419,7 @@ triggerBindings:
   - name: home-apps-builder-trigger-binding
     params:
       - name: gitrevision
-        value: $(body.head_commit.id)
+        value: $(body.pull_request.head.sha)
       - name: namespace
         value: $(context.namespace)
       - name: gitrepositoryurl
