@@ -36,7 +36,7 @@ async fn main() {
 
     let env = Environment::new();
 
-    if let Err(e) = redis::init(&env.redis_url, &env.skip_redis).await {
+    if let Err(e) = redis::init(&env.redis_url).await {
         error!(
             "Redis initialization failed; refusing to start server: {}",
             e
@@ -69,6 +69,7 @@ async fn main() {
         warn!("Failed to connect to Kubernetes cluster. AI agent will have limited functionality.");
     }
 
+    // Start the server
     let server = Server::new(
         Arc::new(agent),
         "0.0.0.0:8080".to_string(),
