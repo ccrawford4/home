@@ -54,4 +54,4 @@ namespaces:
           - path: /
             pathType: Prefix
             serviceName: el-home-apps-builder
-            serviceport: 8080
+            servicePort: 8080
