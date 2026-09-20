@@ -21,6 +21,8 @@ application-template:
           - name: gcp-sa-token
             mountPath: /var/run/secrets/workload-identity-federation
         command: ["/bin/sh", "-c", "hailo-ollama"]
+      nodeSelector:
+        kubernetes.io/hostname: master
       volumes:
         - name: gcp-sa-token
           projected:
