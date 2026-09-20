@@ -10,3 +10,4 @@ namespaces:
   - name: ollama
   - name: atlantis
   - name: pipelines
+  - name: virgo
