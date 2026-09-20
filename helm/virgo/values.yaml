@@ -1,0 +1,31 @@
+application-template:
+  name: virgo
+  namespace: virgo
+  clusterSecretStoreName: cluster-secret-store
+  serviceAccount:
+    create: true
+    name: virgo
+  deployments:
+    - name: virgo
+      replicaCount: 1
+      image:
+        repository: us-central1-docker.pkg.dev/home-473419/internal/virgo
+        pullPolicy: IfNotPresent
+        tag: "v1.0.0"
+        port: 8000
+      service:
+        enabled: true
+        port: 8000
+      container:
+        volumeMounts:
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
+        command: ["/bin/sh", "-c", "hailo-ollama"]
+      volumes:
+        - name: gcp-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+                  expirationSeconds: 3600
+                  path: token
