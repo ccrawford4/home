@@ -1,0 +1,19 @@
+{{- range .Values.persistentVolumeClaims }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .name }}-pvc
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .name }}
+spec:
+  accessModes:
+    {{- toYaml .accessModes | nindent 4 }}
+  {{- if .storageClass }}
+  storageClassName: {{ .storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .resources.requests.storage }}
+---
+{{- end }}

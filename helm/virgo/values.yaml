@@ -32,3 +32,10 @@ application-template:
                   audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
                   expirationSeconds: 3600
                   path: token
+
+  persistentVolumeClaims:
+    - name: hailo-ollama
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 20Gi
