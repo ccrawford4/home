@@ -54,6 +54,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config
         service  = "http://${var.k8s_server_ip}"
       },
       {
+        hostname = "ai.calum.sh",
+        service  = "http://${var.k8s_server_ip}"
+      },
+      {
         # Catch-all rule (required as the last ingress rule)
         service = "http_status:404"
       }
@@ -127,6 +131,15 @@ resource "cloudflare_dns_record" "k8s" {
 resource "cloudflare_dns_record" "ci" {
   zone_id = var.cloudflare_zone_id
   name    = "ci"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
+  ttl     = 1
+  proxied = true
+}
+
+resource "cloudflare_dns_record" "ai" {
+  zone_id = var.cloudflare_zone_id
+  name    = "ai"
   type    = "CNAME"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.master_tunnel.id}.cfargotunnel.com"
   ttl     = 1

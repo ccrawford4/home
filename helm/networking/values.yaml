@@ -55,3 +55,11 @@ namespaces:
             pathType: Prefix
             serviceName: el-home-apps-builder
             servicePort: 8080
+  virgo:
+    rules:
+      - host: ai.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: virgo
+            servicePort: 8000
