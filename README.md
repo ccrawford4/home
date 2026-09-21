@@ -671,3 +671,7 @@ Next Steps:
    a. Must mount entire: '/usr/share/hailo-ollama/models' directory to the PVC.
 3. Create a new K8s job for the Virgo node which serves to install all the hailo-ollama models to the PVC.
 4. Update the Virgo pods to use the new PVC for model storage.
+
+Actual Location for PVC: https://deepwiki.com/search/where-do-the-raw-models-when-w_294517f5-ff65-45d7-9d31-f4827c2578a0?mode=fast
+
+should be instead: '/usr/share/hailo-ollama/models/blob' not anything else.
