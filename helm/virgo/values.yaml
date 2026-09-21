@@ -11,7 +11,7 @@ application-template:
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/virgo
         pullPolicy: IfNotPresent
-        tag: "v2.0.0"
+        tag: "v2.1.0"
         port: 8000
       service:
         enabled: true
