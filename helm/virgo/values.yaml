@@ -11,7 +11,7 @@ application-template:
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/virgo
         pullPolicy: IfNotPresent
-        tag: "v1.0.0"
+        tag: "v2.0.0"
         port: 8000
       service:
         enabled: true
@@ -21,6 +21,7 @@ application-template:
           - name: gcp-sa-token
             mountPath: /var/run/secrets/workload-identity-federation
         command: ["/bin/sh", "-c", "hailo-ollama"]
+      # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
         kubernetes.io/hostname: master
       volumes:
