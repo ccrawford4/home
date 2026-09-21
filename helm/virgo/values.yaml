@@ -20,6 +20,8 @@ application-template:
         volumeMounts:
           - name: gcp-sa-token
             mountPath: /var/run/secrets/workload-identity-federation
+          - name: hailo-ollama
+            mountPath: /usr/share/hailo-ollama/models
         command: ["/bin/sh", "-c", "hailo-ollama"]
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
@@ -32,6 +34,9 @@ application-template:
                   audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
                   expirationSeconds: 3600
                   path: token
+        - name: hailo-ollama
+          persistentVolumeClaim:
+            claimName: hailo-ollama
 
   persistentVolumeClaims:
     - name: hailo-ollama
