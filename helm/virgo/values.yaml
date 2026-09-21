@@ -20,7 +20,7 @@ application-template:
         - name: init-hailo-models
           image: busybox:1.36
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c", "mkdir -p /models"]
+          command: ["/bin/sh", "-c", "mkdir -p /models/manifests"]
           volumeMounts:
             - name: hailo-ollama
               mountPath: /models
