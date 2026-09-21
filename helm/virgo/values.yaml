@@ -36,7 +36,7 @@ application-template:
                   path: token
         - name: hailo-ollama
           persistentVolumeClaim:
-            claimName: hailo-ollama
+            claimName: hailo-ollama-pvc
 
   persistentVolumeClaims:
     - name: hailo-ollama
