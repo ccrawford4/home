@@ -662,10 +662,3 @@ keyless private image pull mechanics. The custom pieces are intentionally narrow
 the OpenID proxy makes K3s service account identity publicly verifiable, and the
 GAR credential provider turns that identity into short-lived registry
 credentials at image-pull time.
-
-# Virgo (AI Accelerator NPU Node)
-
-Next Steps:
-1. Fix the WIF issue for the Virgo node which has a AI Accelerator NPU.
-2. Create a new K8s job for the Virgo node which serves to install all the hailo-ollama models to the PVC.
-3. Update the Virgo pods to use the new PVC for model storage.
