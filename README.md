@@ -662,3 +662,15 @@ keyless private image pull mechanics. The custom pieces are intentionally narrow
 the OpenID proxy makes K3s service account identity publicly verifiable, and the
 GAR credential provider turns that identity into short-lived registry
 credentials at image-pull time.
+
+# Virgo (AI Accelerator NPU Node)
+Next steps:
+```bash
+code=500
+description=Internal Server Error
+stacktrace:
+  - Expected::expect() failed with status=36. Failed to create VDevice
+  - [ApiController]: Error processing request
+  - Error processing request
+```
+Need to setup VDevice
