@@ -33,7 +33,7 @@ application-template:
         command: ["/bin/sh", "-c", "hailo-ollama"]
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
-        kubernetes.io/hostname: master
+        kubernetes.io/hostname: virgo
       volumes:
         - name: gcp-sa-token
           projected:
