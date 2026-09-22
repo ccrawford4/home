@@ -16,20 +16,20 @@ application-template:
       service:
         enabled: true
         port: 8000
-      initContainers:
-        - name: init-hailo-models
-          image: busybox:1.36
-          imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c", "mkdir -p /models/manifests"]
-          volumeMounts:
-            - name: hailo-ollama
-              mountPath: /models
+      # initContainers:
+      #   - name: init-hailo-models
+      #     image: busybox:1.36
+      #     imagePullPolicy: IfNotPresent
+      #     command: ["/bin/sh", "-c", "mkdir -p /models/manifests"]
+      #     volumeMounts:
+      #       - name: hailo-ollama
+      #         mountPath: /models/blob
       container:
         volumeMounts:
           - name: gcp-sa-token
             mountPath: /var/run/secrets/workload-identity-federation
           - name: hailo-ollama
-            mountPath: /usr/share/hailo-ollama/models
+            mountPath: /usr/share/hailo-ollama/models/blob
         command: ["/bin/sh", "-c", "hailo-ollama"]
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
