@@ -48,6 +48,9 @@ application-template:
         - name: hailo-ollama
           persistentVolumeClaim:
             claimName: hailo-ollama-pvc
+        - name: hailo-vdevice
+          persistentVolumeClaim:
+            claimName: hailo-vdevice-pvc
   persistentVolumeClaims:
     - name: hailo-ollama
       accessModes: ["ReadWriteOnce"]
