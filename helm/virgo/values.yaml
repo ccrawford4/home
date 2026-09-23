@@ -5,6 +5,8 @@ application-template:
   serviceAccount:
     create: true
     name: virgo
+  securityContext:
+    privileged: true # Allow container to write to the node directly (workaround since k3s doesnt support Block storage by default)
   deployments:
     - name: virgo
       replicaCount: 1
@@ -33,8 +35,6 @@ application-template:
           - name: hailo-vdevice
             mountPath: /dev/hailo0
         command: ["/bin/sh", "-c", "hailo-ollama"]
-        securityContext:
-          privileged: true # Allow container to write to the node directly (workaround since k3s doesnt support Block storage by default)
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
         kubernetes.io/hostname: virgo
