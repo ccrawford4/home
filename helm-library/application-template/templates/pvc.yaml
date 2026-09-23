@@ -12,6 +12,9 @@ spec:
   {{- if .storageClass }}
   storageClassName: {{ .storageClass }}
   {{- end }}
+  {{- if .volumeMode }}
+  volumeMode: {{ .volumeMode }}
+  {{- end }}
   resources:
     requests:
       storage: {{ .resources.requests.storage }}
