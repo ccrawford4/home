@@ -30,10 +30,11 @@ application-template:
             mountPath: /var/run/secrets/workload-identity-federation
           - name: hailo-ollama
             mountPath: /usr/share/hailo-ollama/models/blob
-        command: ["/bin/sh", "-c", "hailo-ollama"]
-        volumeDevices:
           - name: hailo-vdevice
-            devicePath: /dev/hailo0
+            mountPath: /dev/hailo0
+        command: ["/bin/sh", "-c", "hailo-ollama"]
+        securityContext:
+          privileged: true # Allow container to write to the node directly (workaround since k3s doesnt support Block storage by default)
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
         kubernetes.io/hostname: virgo
@@ -49,18 +50,19 @@ application-template:
           persistentVolumeClaim:
             claimName: hailo-ollama-pvc
         - name: hailo-vdevice
-          persistentVolumeClaim:
-            claimName: hailo-vdevice-pvc
+          hostPath:
+            path: /dev/hailo0 # Path to NPU device on Rasberry Pi AHT 2+ (the node itself)
   persistentVolumeClaims:
     - name: hailo-ollama
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
           storage: 20Gi
-    - name: hailo-vdevice
-      accessModes: ["ReadWriteOnce"]
-      volumeMode: Block
-      storageClass: local-path
-      resources:
-        requests:
-          storage: 20Gi
+  # TODO: bring back the PVC by using a library like OpenEBS to support PVCs. K3s does NOT support block storage by default
+  # - name: hailo-vdevice
+  #   accessModes: ["ReadWriteOnce"]
+  #   volumeMode: Block
+  #   storageClass: local-path
+  #   resources:
+  #     requests:
+  #       storage: 20Gi
