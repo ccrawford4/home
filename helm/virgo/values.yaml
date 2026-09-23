@@ -60,7 +60,7 @@ application-template:
     - name: hailo-vdevice
       accessModes: ["ReadWriteOnce"]
       volumeMode: Block
-      storageClassName:
+      storageClass: local-path
       resources:
         requests:
           storage: 20Gi
