@@ -31,6 +31,7 @@ application-template:
           - name: hailo-ollama
             mountPath: /usr/share/hailo-ollama/models/blob
           - name: hailo-vdevice-path
+            mountPath: /dev/hailo0
         command: ["/bin/sh", "-c", "hailo-ollama"]
       # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
       nodeSelector:
