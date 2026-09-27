@@ -52,7 +52,7 @@ application-template:
         port: 8080
       service:
         enabled: true
-        port: 8000
+        port: 8080
       container:
         volumeMounts:
           - name: hailo-ollama
