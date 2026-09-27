@@ -26,6 +26,7 @@ application-template:
             mountPath: /usr/share/hailo-ollama/models/blob
           - name: hailo-vdevice
             mountPath: /dev/hailo1
+        command: ["/bin/sh", "-c", "hailo-ollama"]
       nodeSelector:
         kubernetes.io/hostname: virgo
       volumes:
