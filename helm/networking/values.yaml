@@ -66,4 +66,4 @@ namespaces:
           - path: /chat
             pathType: Prefix
             serviceName: virgo-gui
-            servicePort: 8000
+            servicePort: 8080
