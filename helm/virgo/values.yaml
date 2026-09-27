@@ -42,6 +42,33 @@ application-template:
         - name: hailo-vdevice
           hostPath:
             path: /dev/hailo0 # Path to NPU device on Rasberry Pi AHT 2+ (the node itself)
+    - name: virgo-gui
+      replicaCount: 1
+      image:
+        repository: ghcr.io/open-webui/open-webui
+        pullPolicy: IfNotPresent
+        tag: "main"
+        port: 8000
+      service:
+        enabled: true
+        port: 8000
+      container:
+        volumeMounts:
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
+          - name: hailo-ollama
+            mountPath: /usr/share/hailo-ollama/models/blob
+          - name: hailo-vdevice
+            mountPath: /dev/hailo1
+      nodeSelector:
+        kubernetes.io/hostname: virgo
+      volumes:
+        - name: hailo-ollama
+          persistentVolumeClaim:
+            claimName: hailo-ollama-pvc
+        - name: hailo-vdevice
+          hostPath:
+            path: /dev/hailo0 # Path to NPU device on Rasberry Pi AHT 2+ (the node itself)
   persistentVolumeClaims:
     - name: hailo-ollama
       accessModes: ["ReadWriteOnce"]
