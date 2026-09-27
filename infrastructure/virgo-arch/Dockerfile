@@ -1,5 +1,5 @@
 # Use the trixie base for arm64
-FROM --platform=linux/arm64 debian:trixie AS builder
+FROM --platform=linux/arm64 debian:trixie AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,23 +8,28 @@ COPY raspberrypi-archive-keyring.gpg /usr/share/keyrings/raspberrypi-archive-key
 RUN echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.com/debian trixie main" \
 	> /etc/apt/sources.list.d/raspberrypi.list
 
-# Base build dependencies
-RUN apt update && \
-	apt upgrade -y && \
-	apt full-upgrade -y && \
-	apt install -y \
-	ca-certificates \
+# Common runtime dependencies shared by both stages.
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+	ca-certificates
+
+FROM base AS builder
+
+# Build dependencies
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
+	build-essential \
 	cmake \
 	g++ \
 	git \
 	libssl-dev \
 	ninja-build \
 	pkg-config \
-	python3 \
-	build-essential
+	python3
 
-# Install Hailo-10H runtime
-RUN apt install -y dkms hailo-h10-all || true
+# Hailo SDK/runtime needed at build time for CMake's HailoRT discovery.
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends dkms hailo-h10-all || true
 
 ARG HAILO_OLLAMA_REPO=https://github.com/ccrawford4/hailo_model_zoo_genai.git
 ARG HAILO_OLLAMA_REF=main
@@ -38,18 +43,11 @@ RUN git checkout "${HAILO_OLLAMA_REF}"
 RUN cmake -S . -B build -G Ninja -DHAILO_BUILD_UT=OFF && \
 	cmake --build build --target hailo-ollama
 
-FROM --platform=linux/arm64 debian:trixie
+FROM base
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-COPY raspberrypi-archive-keyring.gpg /usr/share/keyrings/raspberrypi-archive-keyring.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.com/debian trixie main" \
-	> /etc/apt/sources.list.d/raspberrypi.list
-
-RUN apt update && \
-	apt upgrade -y && \
-	apt full-upgrade -y && \
-	apt install -y dkms hailo-h10-all || true
+# Install the Hailo runtime only in the final image.
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends dkms hailo-h10-all || true
 
 # Set the working directory for the runtime container
 WORKDIR /app
