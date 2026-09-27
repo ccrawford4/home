@@ -60,5 +60,8 @@ COPY hailo_gen_ai_model_zoo_5.1.1_arm64.deb /app/
 RUN dpkg -i hailo_gen_ai_model_zoo_5.1.1_arm64.deb || \
 	apt --fix-broken install -y
 
+# Override packaged manifests with repo versions
+COPY --from=builder /src/hailo_model_zoo_genai/models/manifests /usr/share/hailo-ollama/models/manifests
+
 # Keep the runtime command identical to the Helm chart.
 CMD ["/bin/sh", "-c", "hailo-ollama"]
