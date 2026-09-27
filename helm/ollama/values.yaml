@@ -463,7 +463,9 @@ persistentVolume:
   volumeName: ""
 
 # -- Node labels for pod assignment.
-nodeSelector: {}
+nodeSelector:
+  kubernetes.io/hostname: virgo
+
 
 # -- Tolerations for pod assignment
 tolerations: []
