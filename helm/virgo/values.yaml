@@ -54,8 +54,6 @@ application-template:
         port: 8000
       container:
         volumeMounts:
-          - name: gcp-sa-token
-            mountPath: /var/run/secrets/workload-identity-federation
           - name: hailo-ollama
             mountPath: /usr/share/hailo-ollama/models/blob
           - name: hailo-vdevice
