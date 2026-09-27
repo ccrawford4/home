@@ -51,7 +51,16 @@ RUN apt update && \
 	apt full-upgrade -y && \
 	apt install -y dkms hailo-h10-all || true
 
+# Set the working directory for the runtime container
+WORKDIR /app
+
+# Copy artifacts
 COPY --from=builder /src/hailo_model_zoo_genai/build/src/apps/server/hailo-ollama /usr/local/bin/hailo-ollama
+COPY hailo_gen_ai_model_zoo_5.1.1_arm64.deb /app/
+
+# Setup the GenAI model package and install the deps
+RUN dpkg -i hailo_gen_ai_model_zoo_5.1.1_arm64.deb || \
+	apt --fix-broken install -y
 
 # Keep the runtime command identical to the Helm chart.
 CMD ["/bin/sh", "-c", "hailo-ollama"]

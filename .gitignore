@@ -17,3 +17,4 @@ infrastructure/gar-credential-provider/gcp-credential-provider
 apps/sandbox-api/sandbox-api
 apps/sandbox-cli/sandbox-cli
 raspberrypi-archive-keyring.gpg
+hailo_gen_ai_model_zoo_5.1.1_arm64.deb
