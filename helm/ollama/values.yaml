@@ -98,7 +98,8 @@ ollama:
     #  - llama2
     #  - mistral
     pull: [
-      "tinyllama:latest"
+      "tinyllama:latest",
+      "qwen2.5-coder:1.5b"
     ]
 
     # -- List of models to load in memory at container startup
