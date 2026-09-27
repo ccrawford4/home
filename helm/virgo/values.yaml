@@ -13,19 +13,11 @@ application-template:
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/virgo
         pullPolicy: IfNotPresent
-        tag: "v2.1.0"
+        tag: "v2.2.0"
         port: 8000
       service:
         enabled: true
         port: 8000
-      # initContainers:
-      #   - name: init-hailo-models
-      #     image: busybox:1.36
-      #     imagePullPolicy: IfNotPresent
-      #     command: ["/bin/sh", "-c", "mkdir -p /models/manifests"]
-      #     volumeMounts:
-      #       - name: hailo-ollama
-      #         mountPath: /models/blob
       container:
         volumeMounts:
           - name: gcp-sa-token
@@ -33,9 +25,7 @@ application-template:
           - name: hailo-ollama
             mountPath: /usr/share/hailo-ollama/models/blob
           - name: hailo-vdevice
-            mountPath: /dev/hailo0
-        command: ["/bin/sh", "-c", "hailo-ollama"]
-      # TODO: fix the WIF issue with the virgo node so we can update this Node Selector
+            mountPath: /dev/hailo1
       nodeSelector:
         kubernetes.io/hostname: virgo
       volumes:

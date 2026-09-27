@@ -16,3 +16,4 @@ infrastructure/gar-credential-provider/gcp-credential-provider
 .claude
 apps/sandbox-api/sandbox-api
 apps/sandbox-cli/sandbox-cli
+raspberrypi-archive-keyring.gpg
