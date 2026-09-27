@@ -59,7 +59,11 @@ namespaces:
     rules:
       - host: ai.calum.sh
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
             serviceName: virgo
+            servicePort: 8000
+          - path: /chat
+            pathType: Prefix
+            serviceName: virgo-gui
             servicePort: 8000
