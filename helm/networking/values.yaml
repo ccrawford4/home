@@ -63,7 +63,9 @@ namespaces:
             pathType: Prefix
             serviceName: virgo
             servicePort: 8000
-          - path: /chat
+      - host: chat.calum.sh
+        paths:
+          - path: /
             pathType: Prefix
             serviceName: virgo-gui
             servicePort: 8080
