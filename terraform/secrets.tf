@@ -133,3 +133,23 @@ module "tekton-secrets" {
     "tekton-pipelines-github-token",
   ]
 }
+
+
+module "virgo-secrets" {
+  source         = "./modules/secrets_core"
+  project_id     = var.project_id
+  project_number = var.project_number
+  region         = var.region
+
+  label               = "virgo"
+  k8s_namespace       = "virgo"
+  k8s_service_account = var.secrets_manager_sa_id
+
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
+  workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
+
+  secrets = [
+    "virgo-webui-admin-password"
+  ]
+}

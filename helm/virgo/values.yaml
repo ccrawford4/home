@@ -54,6 +54,14 @@ application-template:
         enabled: true
         port: 8080
       container:
+        env:
+          - name: WEBUI_ADMIN_EMAIL
+            value: calumcrawford9@gmail.com
+          - name: WEBUI_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: virgo-secrets
+                key: webui-admin-password
         volumeMounts:
           - name: hailo-ollama
             mountPath: /usr/share/hailo-ollama/models/blob
@@ -82,3 +90,9 @@ application-template:
   #   resources:
   #     requests:
   #       storage: 20Gi
+
+  secrets:
+    - name: virgo-secrets
+      data:
+        - secretKey: webui-admin-password
+          remoteRefKey: webui-admin-password
