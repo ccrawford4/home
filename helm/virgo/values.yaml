@@ -63,19 +63,18 @@ application-template:
                 name: virgo-secrets
                 key: webui-admin-password
         volumeMounts:
-          - name: hailo-ollama
-            mountPath: /usr/share/hailo-ollama/models/blob
-          - name: hailo-vdevice
-            mountPath: /dev/hailo1
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
       nodeSelector:
         kubernetes.io/hostname: virgo
       volumes:
-        - name: hailo-ollama
-          persistentVolumeClaim:
-            claimName: hailo-ollama-pvc
-        - name: hailo-vdevice
-          hostPath:
-            path: /dev/hailo0 # Path to NPU device on Rasberry Pi AHT 2+ (the node itself)
+        - name: gcp-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+                  expirationSeconds: 3600
+                  path: token
   persistentVolumeClaims:
     - name: hailo-ollama
       accessModes: ["ReadWriteOnce"]
