@@ -28,6 +28,8 @@ application-template:
         port: 80
         targetPort: 8080
       replicaCount: 3
+      nodeSelector:
+        kubernetes.io/hostname: virgo
       container:
         env:
           - name: CHAT_API_KEY
