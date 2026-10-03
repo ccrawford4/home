@@ -8,7 +8,23 @@ This project uses **GCP Secret Manager** with **Workload Identity Federation** t
 
 1. Secrets are stored in **GCP Secret Manager** (managed via Terraform in `terraform/workloads.tf`)
 2. Kubernetes workloads authenticate to GCP using **Workload Identity Federation** (configured in `terraform/platform.tf`)
-3. Secrets are synced to Kubernetes using an in-cluster secrets controller (e.g., [External Secrets Operator](https://external-secrets.io/) or [Secrets Store CSI Driver](https://secrets-store-csi-driver.sigs.k8s.io/))
+3. Secrets are synced to Kubernetes by [External Secrets Operator](https://external-secrets.io/) through a `SecretStore` named `gcp-secret-manager` in each app namespace
+
+## Access Boundary
+
+Each namespace can only read its own secrets:
+
+- `terraform/modules/workload` grants `roles/secretmanager.secretAccessor` on
+  `<namespace>-*` secrets to
+  `principalSet://iam.googleapis.com/<pool>/attribute.ns/<namespace>`, i.e. any
+  Kubernetes service account in that namespace.
+- The namespace's `SecretStore` (created by the `application-template` chart,
+  or by the `atlantis` / `tekton-pipelines` charts) authenticates with
+  `auth.workloadIdentityFederation`: ESO requests a token for the namespace's
+  Kubernetes service account and exchanges it with Google STS. No Google
+  service account or key is involved.
+
+A compromised workload in `virgo` therefore cannot read `atlantis-*` secrets.
 
 ## Adding a New Secret
 
@@ -18,7 +34,18 @@ This project uses **GCP Secret Manager** with **Workload Identity Federation** t
    ```bash
    echo -n "my-secret-value" | gcloud secrets versions add SECRET_NAME --data-file=-
    ```
-4. The in-cluster secrets controller will automatically sync the secret to the target namespace
+4. Reference it from the app chart's `secrets` list with `remoteRefKey: <namespace>-<name>`; ESO syncs it into the namespace
+
+## Adding a New App
+
+1. Add an entry to `local.workloads` in `terraform/workloads.tf`:
+   ```hcl
+   my-app = {
+     secrets = ["api-key"]
+   }
+   ```
+2. Use the `application-template` chart with `namespace: my-app` and a service
+   account. The chart creates the `gcp-secret-manager` SecretStore for you.
 
 ## Why Not Service Account Keys?
 

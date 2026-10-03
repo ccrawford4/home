@@ -1,7 +1,6 @@
 application-template:
   name: search-app
   namespace: search-app
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: search-app
@@ -111,7 +110,6 @@ application-template:
 mysql:
   name: search-app-mysql
   namespace: search-app
-  clusterSecretStoreName: cluster-secret-store
   image:
     repository: mysql
     tag: "8.0"
@@ -142,7 +140,6 @@ mysql:
 redis:
   name: search-app-redis
   namespace: search-app
-  clusterSecretStoreName: cluster-secret-store
   image:
     repository: redis
     tag: "7.0"

@@ -9,7 +9,13 @@ variable "secrets" {
   default     = []
 }
 
-variable "secret_accessors" {
-  description = "IAM members granted roles/secretmanager.secretAccessor on every secret of this workload."
+variable "workload_identity_pool" {
+  description = "Full resource name of the workload identity pool (projects/<number>/locations/global/workloadIdentityPools/<id>)."
+  type        = string
+}
+
+variable "additional_secret_accessors" {
+  description = "IAM members granted roles/secretmanager.secretAccessor on every secret of this workload, in addition to the namespace's Kubernetes identities."
   type        = list(string)
+  default     = []
 }

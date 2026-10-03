@@ -1,7 +1,6 @@
 application-template:
   name: ai-agent-api
   namespace: ai-agent-api
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: ai-agent-api
@@ -72,7 +71,6 @@ application-template:
 redis:
   name: ai-agent-api-redis
   namespace: ai-agent-api
-  clusterSecretStoreName: cluster-secret-store
   image:
     repository: redis
     tag: "7.0"

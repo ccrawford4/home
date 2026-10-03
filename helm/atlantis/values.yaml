@@ -29,7 +29,17 @@ github:
   user: ""
   token: ""
   secret: ""
-clusterSecretStoreName: cluster-secret-store
+# -- Store referenced by every ExternalSecret in `secrets`.
+secretStoreRef:
+  name: gcp-secret-manager
+  kind: SecretStore
+# -- Per-namespace SecretStore backed by Google Secret Manager. External Secrets
+# Operator authenticates as the Atlantis service account through Workload
+# Identity Federation, so it can only read secrets granted to this namespace.
+secretStore:
+  create: true
+  projectID: home-473419
+  audience: //iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider
 secrets:
   - name: atlantis-vcs-secret
     data:

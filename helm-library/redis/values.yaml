@@ -2,8 +2,11 @@
 name: redis
 namespace: redis
 
-# Cluster secret store name for external secrets
-clusterSecretStoreName: cluster-secret-store
+# Store referenced by the ExternalSecret. The application-template chart
+# creates a SecretStore with this name in each app namespace.
+secretStoreRef:
+  name: gcp-secret-manager
+  kind: SecretStore
 
 # Redis image configuration
 image:

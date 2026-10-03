@@ -18,7 +18,7 @@ This chart can be used either as a standalone deployment or as a dependency in o
 - Kubernetes 1.19+
 - Helm 3.0+
 - PersistentVolume provisioner support in the underlying infrastructure (for persistent storage)
-- For external secrets: external-secrets.io installed and a ClusterSecretStore configured
+- For external secrets: external-secrets.io installed and a SecretStore named `gcp-secret-manager` in the namespace (created by the application-template chart)
 
 ## Installation
 
@@ -39,7 +39,6 @@ Then configure it in your application's `values.yaml`:
 redis:
   name: my-app-redis
   namespace: my-app
-  clusterSecretStoreName: cluster-secret-store
   image_name: redis  # or use image.repository
   service:
     type: ClusterIP
@@ -121,7 +120,7 @@ The following table lists the configurable parameters of the Redis chart and the
 |-----------|-------------|---------|
 | `name` | Redis instance name | `redis` |
 | `namespace` | Kubernetes namespace | `redis` |
-| `clusterSecretStoreName` | Name of the ClusterSecretStore for external secrets | `cluster-secret-store` |
+| `secretStoreRef` | Store referenced by the ExternalSecret (`name`, `kind`) | `{name: gcp-secret-manager, kind: SecretStore}` |
 | `image.repository` | Redis image repository | `redis` |
 | `image.tag` | Redis image tag | `7.0` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |

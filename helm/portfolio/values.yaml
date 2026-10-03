@@ -1,7 +1,6 @@
 application-template:
   name: portfolio
   namespace: portfolio
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: portfolio
