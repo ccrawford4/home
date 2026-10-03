@@ -94,4 +94,4 @@ application-template:
     - name: virgo-secrets
       data:
         - secretKey: webui-admin-password
-          remoteRefKey: webui-admin-password
+          remoteRefKey: virgo-webui-admin-password
