@@ -32,9 +32,3 @@ resource "google_storage_bucket_iam_member" "atlantis_write_tf_state" {
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.home_cluster_sa.email}"
 }
-
-# Read by External Secrets Operator through the cluster-wide ClusterSecretStore.
-resource "google_service_account" "secrets_manager" {
-  account_id   = var.secrets_manager_sa_id
-  display_name = "${var.secrets_manager_sa_id} Service Account"
-}
