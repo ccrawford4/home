@@ -416,3 +416,18 @@ moved {
   from = cloudflare_zero_trust_access_application.atlantis_ui
   to   = module.public_hostname["atlantis"].cloudflare_zero_trust_access_application.this["atlantis-ui"]
 }
+
+moved {
+  from = google_service_account.home_cluster_sa
+  to   = module.workload["atlantis"].google_service_account.this[0]
+}
+
+moved {
+  from = google_service_account_iam_member.home_cluster_sa_workload_identity["atlantis/atlantis"]
+  to   = module.workload["atlantis"].google_service_account_iam_member.workload_identity["atlantis"]
+}
+
+moved {
+  from = google_storage_bucket_iam_member.atlantis_write_tf_state
+  to   = module.workload["atlantis"].google_storage_bucket_iam_member.this["terraform-state"]
+}

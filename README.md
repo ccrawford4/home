@@ -98,8 +98,11 @@ Terraform owns the cloud-side resources:
   ingress rules, proxied DNS records and Zero Trust Access applications.
 - `platform.tf`: Google Workload Identity Pool and OIDC provider, the private
   Artifact Registry repository `internal`, and GCS buckets.
-- `service_accounts.tf`: shared Google service accounts and their bindings.
-- `modules/workload`: Secret Manager secrets for one namespace plus who may read them.
+- `service_accounts.tf`: `gar-puller`, the image-pull identity used by the
+  kubelet credential provider.
+- `modules/workload`: Secret Manager secrets for one namespace plus who may
+  read them, and an optional dedicated Google service account
+  (`service_account = { k8s_service_accounts = [...], project_roles = [...] }`).
 - `modules/public_hostname`: DNS record and Access applications for one hostname.
 
 The required local variables are shown in
@@ -273,7 +276,7 @@ sequenceDiagram
   Kubelet->>Plugin: CredentialProviderRequest(image, serviceAccountToken)
   Plugin->>STS: exchange Kubernetes JWT for federated access token
   STS->>Plugin: STS access token
-  Plugin->>IAM: generateAccessToken for home-cluster-sa
+  Plugin->>IAM: generateAccessToken for gar-puller
   IAM->>Plugin: Google OAuth access token
   Plugin->>Kubelet: Docker auth for us-central1-docker.pkg.dev
   Kubelet->>GAR: pull private image
@@ -300,7 +303,7 @@ env:
   - name: STS_AUDIENCE
     value: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
   - name: SERVICE_ACCOUNT_EMAIL
-    value: home-cluster-sa@home-473419.iam.gserviceaccount.com
+    value: gar-puller@home-473419.iam.gserviceaccount.com
 tokenAttributes:
   serviceAccountTokenAudience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
   requireServiceAccount: true
@@ -308,7 +311,21 @@ tokenAttributes:
 
 The plugin validates the image prefix, exchanges the service account JWT with
 Google STS, impersonates the configured Google service account, and returns a
-`CredentialProviderResponse` containing Docker auth:
+`CredentialProviderResponse` containing Docker auth.
+
+`gar-puller` only has `roles/artifactregistry.reader` on the `internal`
+repository. A pod may use it only if its Kubernetes service account is listed
+under `image_pull_service_accounts` for its namespace in
+`terraform/workloads.tf`:
+
+```hcl
+virgo = {
+  secrets                     = ["webui-admin-password"]
+  image_pull_service_accounts = ["virgo"]
+}
+```
+
+Example response:
 
 ```json
 {
