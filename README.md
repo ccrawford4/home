@@ -601,10 +601,15 @@ Run Terraform checks:
 
 ```bash
 cd terraform
-terraform fmt -check
+terraform fmt -check -recursive
+terraform init -backend=false
 terraform validate
+tflint --recursive
 terraform plan
 ```
+
+`.github/workflows/validate.yml` runs the same fmt, validate and tflint checks,
+and renders every chart under `helm/`, on pull requests.
 
 ## Operational Notes
 

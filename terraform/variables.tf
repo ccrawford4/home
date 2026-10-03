@@ -36,11 +36,6 @@ variable "cloudflare_tunnel_secret" {
   sensitive   = true
 }
 
-variable "cloudflare_email" {
-  description = "The Cloudflare account email"
-  type        = string
-}
-
 variable "access_policy_admin_emails" {
   description = "List of email addresses allowed admin access via Cloudflare Zero Trust policies"
   type        = list(string)

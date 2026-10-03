@@ -45,7 +45,6 @@ resource "google_storage_bucket" "terraform_state_bucket" {
       matches_prefix                          = []
       matches_storage_class                   = []
       matches_suffix                          = []
-      no_age                                  = false
       num_newer_versions                      = 2
       send_age_if_zero                        = true
       send_days_since_custom_time_if_zero     = false
@@ -67,7 +66,6 @@ resource "google_storage_bucket" "terraform_state_bucket" {
       matches_prefix                          = []
       matches_storage_class                   = []
       matches_suffix                          = []
-      no_age                                  = false
       num_newer_versions                      = 0
       send_age_if_zero                        = true
       send_days_since_custom_time_if_zero     = false
