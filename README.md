@@ -93,12 +93,15 @@ Current first-class charts:
 
 Terraform owns the cloud-side resources:
 
-- `dns.tf`: Cloudflare Tunnel, tunnel ingress config, and proxied DNS records.
-- `gar.tf`: private Google Artifact Registry repository named `internal`.
-- `gcs.tf`: GCS bucket for Terraform state storage.
-- `wif.tf`: Google Workload Identity Pool, OIDC provider, service account, and GAR reader binding.
-- `secrets.tf`: per-application Secret Manager secrets and IAM bindings.
-- `modules/secrets_core`: creates Secret Manager secrets and grants access to both a Google service account and a Kubernetes WIF principal.
+- `workloads.tf`: one map entry per namespace listing its Secret Manager
+  secrets. Adding a secret is a one-line change.
+- `edge.tf`: one map entry per public hostname. Generates the Cloudflare Tunnel
+  ingress rules, proxied DNS records and Zero Trust Access applications.
+- `platform.tf`: Google Workload Identity Pool and OIDC provider, the private
+  Artifact Registry repository `internal`, and GCS buckets.
+- `service_accounts.tf`: shared Google service accounts and their bindings.
+- `modules/workload`: Secret Manager secrets for one namespace plus who may read them.
+- `modules/public_hostname`: DNS record and Access applications for one hostname.
 
 The required local variables are shown in
 `terraform/secrets.auto.tfvars.example`:
@@ -209,7 +212,7 @@ env:
 Terraform also configures Google WIF so Kubernetes service account JWTs can be
 trusted by Google without static keys.
 
-The provider in `terraform/wif.tf` maps:
+The provider in `terraform/platform.tf` maps:
 
 ```hcl
 attribute_mapping = {
@@ -225,7 +228,7 @@ The important subject format is:
 system:serviceaccount:<namespace>:<service-account>
 ```
 
-`terraform/modules/secrets_core/iam_policy_binding/main.tf` grants
+`terraform/modules/workload/main.tf` grants
 `roles/secretmanager.secretAccessor` to principals like:
 
 ```text

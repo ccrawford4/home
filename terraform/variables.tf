@@ -78,8 +78,3 @@ variable "secrets_manager_sa_id" {
   type        = string
   default     = "secrets-manager-sa"
 }
-
-variable "secrets_manager_sa_email" {
-  description = "The email of the secrets manager service account"
-  type        = string
-}
