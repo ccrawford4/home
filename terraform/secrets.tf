@@ -153,3 +153,24 @@ module "virgo-secrets" {
     "virgo-webui-admin-password"
   ]
 }
+
+module "virgo-bench-secrets" {
+  source         = "./modules/secrets_core"
+  project_id     = var.project_id
+  project_number = var.project_number
+  region         = var.region
+
+  label               = "virgo-bench"
+  k8s_namespace       = "virgo-bench"
+  k8s_service_account = var.secrets_manager_sa_id
+
+  google_service_account_id    = var.secrets_manager_sa_id
+  google_service_account_email = var.secrets_manager_sa_email
+  workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
+
+  secrets = [
+    "virgo-bench-db-username",
+    "virgo-bench-db-password",
+    "virgo-bench-db-root-password",
+  ]
+}

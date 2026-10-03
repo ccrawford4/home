@@ -139,3 +139,28 @@ resource "cloudflare_zero_trust_access_application" "atlantis_ui" {
   http_only_cookie_attribute = true
   options_preflight_bypass   = false
 }
+
+# Virgo benchmark UI and API: admins only
+resource "cloudflare_zero_trust_access_application" "virgo_bench" {
+  account_id                = var.cloudflare_account_id
+  name                      = "virgo-bench"
+  type                      = "self_hosted"
+  allowed_idps              = []
+  auto_redirect_to_identity = false
+  session_duration          = "24h"
+  domain                    = "bench.calum.sh"
+
+  destinations = [{
+    type = "public"
+    uri  = "bench.calum.sh"
+  }]
+
+  policies = [{
+    id = cloudflare_zero_trust_access_policy.home_master_k8s_api_admin.id
+  }]
+
+  app_launcher_visible       = true
+  enable_binding_cookie      = false
+  http_only_cookie_attribute = true
+  options_preflight_bypass   = false
+}

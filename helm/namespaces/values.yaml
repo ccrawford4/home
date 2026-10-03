@@ -11,3 +11,4 @@ namespaces:
   - name: atlantis
   - name: pipelines
   - name: virgo
+  - name: virgo-bench

@@ -1,0 +1,96 @@
+application-template:
+  name: virgo-bench
+  namespace: virgo-bench
+  clusterSecretStoreName: cluster-secret-store
+  serviceAccount:
+    create: true
+    name: virgo-bench
+
+  configMaps:
+    - name: virgo-bench-config
+      data:
+        # Call virgo inside the cluster so timings exclude Cloudflare.
+        VIRGO_URL: "http://virgo.virgo.svc.cluster.local:8000"
+        MYSQL_HOST: "virgo-bench-mysql.virgo-bench.svc.cluster.local"
+        MYSQL_DATABASE: "virgobench"
+
+  deployments:
+    - name: virgo-bench
+      replicaCount: 1 # the runner queue is in-process; keep a single replica
+      image:
+        repository: us-central1-docker.pkg.dev/home-473419/internal/virgo-bench
+        pullPolicy: IfNotPresent
+        tag: "v0.1.0"
+        port: 8080
+      service:
+        enabled: true
+        port: 8080
+      container:
+        envFrom:
+          - configMapRef:
+              name: virgo-bench-config
+        env:
+          - name: MYSQL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: virgo-bench-secrets
+                key: db-username
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: virgo-bench-secrets
+                key: db-password
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 240 # waits up to 3 minutes for MySQL on first boot
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+
+  secrets:
+    - name: virgo-bench-secrets
+      data:
+        - secretKey: db-username
+          remoteRefKey: virgo-bench-db-username
+        - secretKey: db-password
+          remoteRefKey: virgo-bench-db-password
+
+mysql:
+  name: virgo-bench-mysql
+  namespace: virgo-bench
+  clusterSecretStoreName: cluster-secret-store
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  database_name: virgobench
+  service:
+    type: ClusterIP
+    port: 3306
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 5Gi
+  secrets:
+    useExternalSecrets: true
+    externalSecrets:
+      rootPasswordKey: virgo-bench-db-root-password
+      userPasswordKey: virgo-bench-db-password
+      usernameKey: virgo-bench-db-username
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 384Mi
