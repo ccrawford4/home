@@ -72,9 +72,3 @@ variable "gar_location" {
   type        = string
   default     = "us-central1"
 }
-
-variable "secrets_manager_sa_id" {
-  description = "The account ID for the secrets manager service account"
-  type        = string
-  default     = "secrets-manager-sa"
-}

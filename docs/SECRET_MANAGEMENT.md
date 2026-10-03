@@ -49,7 +49,7 @@ A compromised workload in `virgo` therefore cannot read `atlantis-*` secrets.
 
 ## Why Not Service Account Keys?
 
-Service account keys (`apply-gcp-secret.sh` was previously used for this):
+Service account keys (previously a `secrets-manager-sa` key in the `gcp-sa-secret` Secret, read by a single cluster-wide `ClusterSecretStore`):
 - Are long-lived credentials that can be leaked
 - Cannot be automatically rotated
 - Require manual distribution to hosts
