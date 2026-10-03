@@ -4,6 +4,12 @@
 # "search-app" entry becomes the Secret Manager secret "search-app-db-password".
 # Adding a secret is a one-line change here; set its value afterwards with
 #   echo -n "value" | gcloud secrets versions add <namespace>-<name> --data-file=-
+#
+# Optional fields:
+#   image_pull_service_accounts - Kubernetes service accounts whose pods pull
+#                                 from the internal registry (see gar_puller)
+#   service_account             - a dedicated Google service account; see
+#                                 modules/workload/variables.tf
 locals {
   workloads = {
     search-app = {
@@ -30,7 +36,8 @@ locals {
     }
 
     portfolio = {
-      secrets = ["chat-api-key"]
+      secrets                     = ["chat-api-key"]
+      image_pull_service_accounts = ["nginx-example"]
     }
 
     openid-server = {
@@ -57,6 +64,17 @@ locals {
         "k8s-server-ip",
         "cloudflare-zone-id",
       ]
+
+      # Runs Terraform. home-cluster-sa predates this layout and holds project
+      # roles granted outside Terraform, so it is kept rather than recreated.
+      service_account = {
+        account_id           = "home-cluster-sa"
+        display_name         = "Home Cluster Service Account"
+        k8s_service_accounts = ["atlantis"]
+        bucket_roles = {
+          terraform-state = { bucket = var.tf_state_bucket_name, role = "roles/storage.admin" }
+        }
+      }
     }
 
     tekton-pipelines = {
@@ -64,7 +82,8 @@ locals {
     }
 
     virgo = {
-      secrets = ["webui-admin-password"]
+      secrets                     = ["webui-admin-password"]
+      image_pull_service_accounts = ["virgo"]
     }
   }
 }
@@ -76,4 +95,5 @@ module "workload" {
   namespace              = each.key
   secrets                = each.value.secrets
   workload_identity_pool = local.wif_pool
+  service_account        = try(each.value.service_account, null)
 }
