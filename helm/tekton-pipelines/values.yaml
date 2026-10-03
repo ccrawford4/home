@@ -327,7 +327,18 @@ clusterSecretStores:
     secretNamespace: default
 # Secrets
 secretsConfig:
-  clusterSecretStoreName: cluster-secret-store
+  # Store referenced by every ExternalSecret below.
+  secretStoreRef:
+    name: gcp-secret-manager
+    kind: SecretStore
+  # Per-namespace SecretStore backed by Google Secret Manager. External Secrets
+  # Operator authenticates as serviceAccount through Workload Identity
+  # Federation, so it can only read secrets granted to this namespace.
+  secretStore:
+    create: true
+    serviceAccount: tekton-triggers
+    projectID: home-473419
+    audience: //iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider
   secrets:
     - name: github-secret
       data:

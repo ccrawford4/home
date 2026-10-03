@@ -19,7 +19,7 @@ This chart can be used either as a standalone deployment or as a dependency in o
 - Kubernetes 1.19+
 - Helm 3.0+
 - PersistentVolume provisioner support in the underlying infrastructure (for persistent storage)
-- For external secrets: external-secrets.io installed and a ClusterSecretStore configured
+- For external secrets: external-secrets.io installed and a SecretStore named `gcp-secret-manager` in the namespace (created by the application-template chart)
 
 ## Installation
 
@@ -40,7 +40,6 @@ Then configure it in your application's `values.yaml`:
 mysql:
   name: my-app-mysql
   namespace: my-app
-  clusterSecretStoreName: cluster-secret-store
   image_name: mysql  # or use image.repository
   database_name: myappdb  # or use mysql.database
   service:
@@ -133,7 +132,7 @@ The following table lists the configurable parameters of the MySQL chart and the
 |-----------|-------------|---------|
 | `name` | MySQL instance name | `mysql` |
 | `namespace` | Kubernetes namespace | `mysql` |
-| `clusterSecretStoreName` | Name of the ClusterSecretStore for external secrets | `cluster-secret-store` |
+| `secretStoreRef` | Store referenced by the ExternalSecret (`name`, `kind`) | `{name: gcp-secret-manager, kind: SecretStore}` |
 | `image.repository` | MySQL image repository | `mysql` |
 | `image.tag` | MySQL image tag | `8.0` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |

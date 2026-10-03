@@ -1,7 +1,6 @@
 application-template:
   name: openid-server
   namespace: openid-server
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: openid-server

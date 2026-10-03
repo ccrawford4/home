@@ -1,7 +1,6 @@
 application-template:
   name: virgo
   namespace: virgo
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: virgo
