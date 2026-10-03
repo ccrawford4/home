@@ -1,0 +1,7 @@
+node_modules/
+dist/*
+!dist/.gitkeep
+# The repo root ignores *.json; these are source files.
+!package.json
+!package-lock.json
+!tsconfig.json

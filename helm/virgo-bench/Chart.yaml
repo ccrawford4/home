@@ -1,0 +1,13 @@
+apiVersion: v2
+name: virgo-bench
+description: Benchmark suite for models served by virgo (hailo-ollama)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: application-template
+    version: 0.1.0
+    repository: "file://../../helm-library/application-template"
+  - name: mysql
+    version: 0.1.0
+    repository: "file://../../helm-library/mysql"
