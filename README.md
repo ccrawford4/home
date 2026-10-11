@@ -27,7 +27,7 @@ flowchart TD
   Helm --> Apps[Application namespaces]
 
   Apps --> ESO[External Secrets Operator]
-  ESO --> Store[ClusterSecretStore]
+  ESO --> Store[Per-namespace SecretStore]
   Store --> GSM[Google Secret Manager]
 
   Internet[Public Internet] --> CF[Cloudflare Tunnel + DNS]
@@ -82,7 +82,6 @@ Current first-class charts:
 | --- | --- |
 | `helm/namespaces` | Cluster namespaces used by the apps and infrastructure charts. |
 | `helm/external-secrets` | External Secrets Operator chart, including CRDs. |
-| `helm/identity-management` | A `ClusterSecretStore` named `cluster-secret-store` for GCP Secret Manager. |
 | `helm/networking` | Traefik `Ingress` resources for `search.calum.sh`, `about.calum.sh`, `argocd.calum.sh`, and `openid.calum.sh`. |
 | `helm/search-app` | Search frontend, search backend, MySQL, Redis, and synced app secrets. |
 | `helm/portfolio` | Portfolio app and an example private GAR-backed nginx deployment. |
@@ -141,50 +140,48 @@ Use `echo -n` so the secret does not accidentally include a trailing newline.
 
 ## Secrets Model
 
-There are two related identity patterns in this repo.
-
-### 1. Current External Secrets path
-
-The cluster currently syncs Google Secret Manager values through External
-Secrets Operator using a Kubernetes secret that contains a Google service
-account JSON key.
+Google Secret Manager holds every secret. External Secrets Operator syncs them
+into Kubernetes Secrets, and each namespace can only read its own.
 
 ```mermaid
 flowchart LR
   GSM[Google Secret Manager] --> ESO[External Secrets Operator]
-  Key[gcp-sa-secret in default namespace] --> Store[ClusterSecretStore]
+  KSA[App Kubernetes service account token] --> STS[Google STS]
+  STS --> Store[SecretStore gcp-secret-manager in app namespace]
   Store --> ESO
   ESO --> K8sSecret[Kubernetes Secret in app namespace]
   K8sSecret --> Pod[Application pod env vars]
 ```
 
-The `ClusterSecretStore` is defined by
-`helm/identity-management/templates/cluster_secret_store.yaml` and configured
-in `helm/identity-management/values.yaml`:
+Terraform (`terraform/modules/workload`) creates the `<namespace>-*` secrets
+and grants `roles/secretmanager.secretAccessor` on them to every Kubernetes
+service account in that namespace:
+
+```text
+principalSet://iam.googleapis.com/projects/<project-number>/locations/global/workloadIdentityPools/<pool-id>/attribute.ns/<namespace>
+```
+
+The `application-template` chart creates a `SecretStore` named
+`gcp-secret-manager` in the app namespace. It authenticates with Workload
+Identity Federation as the app's own service account, so there are no Google
+service account keys:
 
 ```yaml
-clusterSecretStores:
-  - name: cluster-secret-store
-    projectID: "home-473419"
-    secretName: gcp-sa-secret
-    secretKey: secret-access-credentials
-    secretNamespace: default
+spec:
+  provider:
+    gcpsm:
+      projectID: "home-473419"
+      auth:
+        workloadIdentityFederation:
+          audience: "//iam.googleapis.com/projects/<project-number>/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+          serviceAccountRef:
+            name: search-app
+            audiences:
+              - "//iam.googleapis.com/projects/<project-number>/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
 ```
 
-`apply-gcp-secret.sh` bootstraps that key:
-
-```bash
-./apply-gcp-secret.sh <project-id> <ssh-host>
-ssh <ssh-host> "kubectl apply -f ~/gcp-sa-secret.yaml"
-```
-
-That script creates a key for
-`secrets-manager-sa@<project-id>.iam.gserviceaccount.com`, renders a
-`gcp-sa-secret.yaml`, copies it to the remote host, and removes the temporary
-local files.
-
-Application charts then define `ExternalSecret` resources through the local
-`application-template` chart:
+Application charts then define `ExternalSecret` resources through the
+`secrets` list:
 
 ```yaml
 secrets:
@@ -207,12 +204,7 @@ env:
         key: db-password
 ```
 
-### 2. Workload Identity Federation path
-
-Terraform also configures Google WIF so Kubernetes service account JWTs can be
-trusted by Google without static keys.
-
-The provider in `terraform/platform.tf` maps:
+The WIF provider in `terraform/platform.tf` maps the token claims used above:
 
 ```hcl
 attribute_mapping = {
@@ -221,24 +213,6 @@ attribute_mapping = {
   "attribute.sa"   = "assertion['kubernetes.io']['serviceaccount']['name']"
 }
 ```
-
-The important subject format is:
-
-```text
-system:serviceaccount:<namespace>:<service-account>
-```
-
-`terraform/modules/workload/main.tf` grants
-`roles/secretmanager.secretAccessor` to principals like:
-
-```text
-principal://iam.googleapis.com/projects/<project-number>/locations/global/workloadIdentityPools/<pool-id>/subject/system:serviceaccount:search-app:secrets-manager-sa
-```
-
-This means the IAM side is prepared for keyless Kubernetes identities. The
-current `ClusterSecretStore` chart still uses the JSON key secret above; moving
-External Secrets fully onto WIF would require changing the store auth config to
-use workload identity instead of `secretRef`.
 
 ## Kubernetes OpenID Issuer
 
@@ -380,7 +354,6 @@ A minimal app values file looks like:
 application-template:
   name: example
   namespace: example
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: example
@@ -459,17 +432,7 @@ gcloud secrets versions add openid-server-kubernetes-api-url \
 If your shell does not support process substitution, write the value to a
 temporary file and pass that file to `--data-file`.
 
-### 4. Bootstrap External Secrets access
-
-Until the `ClusterSecretStore` is converted to WIF, create the GCP service
-account key secret:
-
-```bash
-./apply-gcp-secret.sh "$PROJECT_ID" pi@<master-node-ip>
-ssh pi@<master-node-ip> "kubectl apply -f ~/gcp-sa-secret.yaml"
-```
-
-### 5. Install Argo CD
+### 4. Install Argo CD
 
 From the cluster node or any machine with working `kubectl` and `helm` access:
 
@@ -481,7 +444,7 @@ kubectl apply -f applicationset.yaml
 Argo CD will discover all directories under `helm/*` and reconcile them into the
 cluster.
 
-### 6. Check the rollout
+### 5. Check the rollout
 
 Useful commands:
 
@@ -528,7 +491,6 @@ dependencies:
 application-template:
   name: my-app
   namespace: my-app
-  clusterSecretStoreName: cluster-secret-store
   serviceAccount:
     create: true
     name: my-app
@@ -565,25 +527,12 @@ namespaces:
             servicePort: 80
 ```
 
-5. Add Terraform Secret Manager entries if the app needs secrets.
+5. Add the app to `local.workloads` in `terraform/workloads.tf` if it needs
+   secrets. Only service accounts in `my-app` can read them.
 
 ```hcl
-module "my-app-secrets" {
-  source         = "./modules/secrets_core"
-  project_id     = var.project_id
-  project_number = var.project_number
-  region         = var.region
-
-  label               = "my-app"
-  k8s_namespace       = "my-app"
-  k8s_service_account = "secrets-manager-sa"
-  secrets = [
-    "my-app-api-key",
-  ]
-
-  google_service_account_id    = "secrets-manager-sa"
-  google_service_account_email = "secrets-manager-sa@${var.project_id}.iam.gserviceaccount.com"
-  workload_identity_pool_id    = google_iam_workload_identity_pool.home_cluster_pool.workload_identity_pool_id
+my-app = {
+  secrets = ["api-key"] # creates my-app-api-key
 }
 ```
 
@@ -642,15 +591,16 @@ terraform plan
 
 ## Operational Notes
 
-- Do not commit generated service account keys, `gcp-sa-secret.yaml`,
-  `.auto.tfvars`, Terraform state, or kubeconfigs.
+- Do not commit service account keys, `.auto.tfvars`, Terraform state, or
+  kubeconfigs.
 - The OpenID issuer hostname must keep serving discovery and JWKS documents. WIF
   token exchange and private image pulls depend on it.
 - Secret Manager secrets created by Terraform are empty until a version is
   added.
-- The current External Secrets path is key-based. The IAM bindings in Terraform
-  also prepare WIF principals, but the Helm `ClusterSecretStore` must be changed
-  before ESO itself becomes keyless.
+- External Secrets is keyless: each namespace's `SecretStore` uses WIF with
+  the app's own service account. If a store reports an auth error, check that
+  the namespace has an entry in `terraform/workloads.tf` and that the service
+  account named in the store exists.
 - `applicationset.yaml` syncs every chart under `helm/*`, so partially created
   chart directories can become Argo CD applications.
 - The vendored `helm/external-secrets` chart is large because it includes CRDs

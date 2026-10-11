@@ -318,13 +318,6 @@ triggers:
       - ref: home-apps-builder-trigger-binding
     template:
       ref: home-apps-builder-trigger
-# ClusterSecretStores
-clusterSecretStores:
-  - name: cluster-secret-store
-    projectID: "home-473419"
-    secretName: gcp-sa-secret
-    secretKey: secret-access-credentials
-    secretNamespace: default
 # Secrets
 secretsConfig:
   # Store referenced by every ExternalSecret below.

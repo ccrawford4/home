@@ -76,12 +76,4 @@ module "workload" {
   namespace              = each.key
   secrets                = each.value.secrets
   workload_identity_pool = local.wif_pool
-
-  # Legacy readers kept while workloads move from the shared ClusterSecretStore
-  # (secrets-manager-sa) to their per-namespace SecretStore. Remove once every
-  # ExternalSecret reports SecretSynced through the new store.
-  additional_secret_accessors = [
-    "principal://iam.googleapis.com/${local.wif_pool}/subject/system:serviceaccount:${each.key}:${var.secrets_manager_sa_id}",
-    "serviceAccount:${google_service_account.secrets_manager.email}",
-  ]
 }
