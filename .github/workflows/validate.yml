@@ -1,0 +1,47 @@
+name: validate
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - "helm/**"
+      - "helm-library/**"
+      - ".github/workflows/validate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.13"
+      - uses: terraform-linters/setup-tflint@v4
+      - run: terraform fmt -check -recursive -diff
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - run: tflint --recursive --format compact
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Render every chart
+        run: |
+          status=0
+          for chart in helm/*/; do
+            name=$(basename "$chart")
+            helm dependency build "$chart" >/dev/null
+            if ! helm template "$name" "$chart" --namespace "$name" >/dev/null; then
+              echo "::error::helm template failed for $name"
+              status=1
+            fi
+          done
+          exit $status

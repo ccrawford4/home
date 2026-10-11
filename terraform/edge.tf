@@ -28,7 +28,7 @@ locals {
 
     atlantis = {
       access_apps = {
-        atlantis-ui = { policy = "atlantis_admin" }
+        atlantis-ui = { policy = "admin" }
         # GitHub webhooks must reach /events without logging in.
         atlantis-webhooks = { policy = "atlantis_webhook_bypass", path = "/events", app_launcher_visible = false }
       }
@@ -46,7 +46,6 @@ locals {
   # var.access_policy_admin_emails; "bypass" policies admit everyone.
   access_policies = {
     admin                   = { name = "Admin", decision = "allow" }
-    atlantis_admin          = { name = "Atlantis Admin", decision = "allow" }
     atlantis_webhook_bypass = { name = "Atlantis Webhook Bypass", decision = "bypass" }
   }
 }
@@ -56,10 +55,6 @@ resource "cloudflare_zero_trust_tunnel_cloudflared" "master_tunnel" {
   name          = "home.master"
   config_src    = "cloudflare"
   tunnel_secret = var.cloudflare_tunnel_secret
-
-  lifecycle {
-    ignore_changes = [connections]
-  }
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "master_tunnel_config" {
