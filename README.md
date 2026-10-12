@@ -405,7 +405,24 @@ Install K3s on the nodes, then apply the relevant settings from
   provider bin directory, for example
   `/var/lib/rancher/gcp-credential-provider/bin`
 
-Restart K3s after changing kube-apiserver or kubelet args.
+The kubelet only reads `/etc/rancher/k3s/credential-provider-config.yaml` when
+`/etc/rancher/k3s/config.yaml` also sets `image-credential-provider-config`
+(from `infrastructure/k3s/config.yaml`). Without that flag, the kubelet reads
+`/var/lib/rancher/credentialprovider/config.yaml` instead, so copy the file
+there too.
+
+The `tokenAttributes.cacheType` field is not accepted by every kubelet version.
+On K3s v1.33.4 the kubelet refuses to start with
+`unknown field "providers[0].tokenAttributes.cacheType"`, and K3s restart-loops.
+Remove the `cacheType` line from the installed copy on any node whose kubelet
+rejects it (K3s v1.36.4 accepts it). Check a node with:
+
+```bash
+sudo journalctl -u k3s --no-pager | grep cacheType
+```
+
+Restart K3s after changing kube-apiserver or kubelet args, or after changing the
+credential provider config.
 
 ### 2. Create cloud infrastructure
 
@@ -481,7 +498,9 @@ curl https://openid.calum.sh/openid/v1/jwks
 ```
 
 For private image pull debugging, inspect kubelet/provider logs and the provider
-log configured in `credential-provider-config.yaml`:
+log configured in `credential-provider-config.yaml`. The provider only creates
+that log file on its first run, so it won't exist until a pod pulls from `internal`.
+If the file is missing, check the kubelet journal instead (`sudo journalctl -u k3s`):
 
 ```bash
 sudo tail -f /var/log/gcp-credential-provider.log
