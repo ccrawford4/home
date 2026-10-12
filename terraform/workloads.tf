@@ -85,6 +85,11 @@ locals {
       secrets                     = ["webui-admin-password"]
       image_pull_service_accounts = ["virgo"]
     }
+
+    virgo-bench = {
+      secrets                     = ["db-username", "db-password", "db-root-password"]
+      image_pull_service_accounts = ["virgo-bench"]
+    }
   }
 }
 

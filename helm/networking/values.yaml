@@ -69,3 +69,11 @@ namespaces:
             pathType: Prefix
             serviceName: virgo-gui
             servicePort: 8080
+  virgo-bench:
+    rules:
+      - host: bench.calum.sh
+        paths:
+          - path: /
+            pathType: Prefix
+            serviceName: virgo-bench
+            servicePort: 8080

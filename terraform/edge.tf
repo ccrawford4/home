@@ -20,6 +20,12 @@ locals {
     openid = {}
     search = {}
 
+    bench = {
+      access_apps = {
+        virgo-bench = { policy = "admin" }
+      }
+    }
+
     argocd = {
       access_apps = {
         home-master-argocd = { policy = "admin" }
