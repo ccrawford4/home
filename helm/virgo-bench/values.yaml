@@ -29,6 +29,9 @@ application-template:
         envFrom:
           - configMapRef:
               name: virgo-bench-config
+        volumeMounts:
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
         env:
           - name: MYSQL_USERNAME
             valueFrom:
@@ -49,6 +52,14 @@ application-template:
           path: /healthz
           port: http
         initialDelaySeconds: 240 # waits up to 3 minutes for MySQL on first boot
+      volumes:
+        - name: gcp-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+                  expirationSeconds: 3600
+                  path: token
       resources:
         requests:
           cpu: 50m
