@@ -1,0 +1,20 @@
+namespace: gpu-node
+
+# GPU nodes from terraform/gpu_pool.tf carry this label and taint.
+nodeSelector:
+  accelerator: nvidia-l4
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: "true"
+    effect: NoSchedule
+
+ollama:
+  image: ollama/ollama:0.12.6
+  port: 11434
+  # Baked into the node image by infrastructure/gpu-image so cold starts skip the download.
+  modelsHostPath: /var/lib/ollama/models
+  keepAlive: "-1"
+
+devicePlugin:
+  image: nvcr.io/nvidia/k8s-device-plugin:v0.17.0

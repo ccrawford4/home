@@ -19,7 +19,15 @@ application-template:
               onPrem: true
               concurrency: 1 # hailo-ollama serves one generation at a time
               keepAlive: -1  # avoid the ~10 s model reload after 5 min idle
-          # GPU nodes register themselves at runtime via POST /internal/backends.
+            # Ollama on GCP GPU nodes (helm/gpu-node). With the pool at 0 the
+            # Service has no endpoints, health checks fail and requests fall
+            # back to hailo.
+            - name: gpu-l4
+              url: http://ollama.gpu-node.svc.cluster.local:11434
+              onPrem: false
+              concurrency: 4
+          # Tells the sandbox-api GPU pool scaler to start a node (or keep one alive).
+          demandURL: http://sandbox-api.sandbox-api.svc.cluster.local:8080/gpu-pool/demand
           models:
             qwen2.5-coder:1.5b: [hailo]
             qwen2:1.5b: [hailo]

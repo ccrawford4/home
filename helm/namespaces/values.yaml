@@ -12,3 +12,4 @@ namespaces:
   - name: virgo
   - name: virgo-bench
   - name: inference-gateway
+  - name: gpu-node
