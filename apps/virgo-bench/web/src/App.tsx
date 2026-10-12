@@ -55,9 +55,7 @@ export default function App() {
         <div className="topbar-inner">
           <a className="brand" href="#" onClick={(e) => (e.preventDefault(), setDetailId(null))}>
             <Logo />
-            <span className="brand-name">
-              Virgo <span>Bench</span>
-            </span>
+            <span className="brand-name">Virgo Bench</span>
           </a>
           <div className="topbar-right">
             <LiveDot active={active} />
@@ -153,11 +151,7 @@ function Overview({ runs }: { runs: Run[] }) {
         value={String(runs.length)}
         hint={`${done.length} completed${pending ? ` · ${pending} in queue` : ""}`}
       />
-      <Stat
-        label="Models tested"
-        value={String(new Set(runs.map((r) => r.model)).size)}
-        hint="Distinct model tags"
-      />
+      <Stat label="Models tested" value={String(new Set(runs.map((r) => r.model)).size)} />
       <Stat
         label="Fastest TTFT p50"
         value={fmtMs(ttft?.v)}
@@ -218,7 +212,7 @@ function NewRun({ onCreated }: { onCreated: () => void }) {
           <p className="muted small">Queue a benchmark against a model served by virgo.</p>
         </div>
       </div>
-      <form onSubmit={submit} className="form">
+      <form id="new-run" onSubmit={submit} className="form">
         <label>
           Model
           {models.length > 0 ? (
@@ -282,17 +276,18 @@ function NewRun({ onCreated }: { onCreated: () => void }) {
             Tool calling
           </label>
         </fieldset>
-        <button type="submit" className="primary" disabled={busy || !cfg.model}>
-          {Icon.play}
-          {busy ? "Queuing…" : "Run benchmark"}
-        </button>
       </form>
       {modelErr && <p className="banner warn small">Couldn't list models from virgo: {modelErr}</p>}
       {err && <p className="banner error small">{err}</p>}
-      <p className="note small">
-        Runs execute one at a time because the NPU serves one request at a time. Chats on
-        chat.calum.sh during a run will skew its timings.
-      </p>
+      <div className="card-foot">
+        <p className="muted small">
+          Runs execute one at a time because the NPU serves one request at a time. Chats on
+          chat.calum.sh during a run will skew its timings.
+        </p>
+        <button type="submit" form="new-run" className="primary" disabled={busy || !cfg.model}>
+          {busy ? "Queuing…" : "Run benchmark"}
+        </button>
+      </div>
     </section>
   );
 }
@@ -328,7 +323,6 @@ function RunsTable(props: {
       </div>
       {runs.length === 0 ? (
         <div className="empty">
-          <Logo size={36} />
           <p>No runs yet</p>
           <p className="muted small">Start one above to see latency and throughput here.</p>
         </div>
@@ -570,11 +564,7 @@ function RunDetail({ id, onBack, live }: { id: number; onBack: () => void; live:
             value={fmtMs(s.warm?.client_ttft_ms?.p50)}
             hint={`Server ${fmtMs(s.warm?.server_ttft_ms?.p50)}`}
           />
-          <Stat
-            label="TTLT p50"
-            value={fmtMs(s.warm?.client_ttlt_ms?.p50)}
-            hint="Time to last token"
-          />
+          <Stat label="TTLT p50" value={fmtMs(s.warm?.client_ttlt_ms?.p50)} />
           <Stat
             label="Decode speed"
             value={s.warm?.decode_tps ? `${fmtNum(s.warm.decode_tps.p50)} tok/s` : "–"}

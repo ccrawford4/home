@@ -62,36 +62,19 @@ export const Icon = {
       <path d="M8 21h8M12 17v4" />
     </>,
   ),
-  play: icon(<path d="M7 4.5v15l12-7.5z" />),
   back: icon(<path d="M19 12H5M12 19l-7-7 7-7" />),
   trash: icon(<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />),
   x: icon(<path d="M18 6 6 18M6 6l12 12" />),
   chevron: icon(<path d="m9 18 6-6-6-6" />),
 };
 
-export function Logo({ size = 28 }: { size?: number }) {
+export function Logo({ size = 24 }: { size?: number }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden="true" className="logo">
-      <defs>
-        <linearGradient id="vb-logo" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#6366f1" />
-          <stop offset="1" stopColor="#9333ea" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill="url(#vb-logo)" />
-      <polyline
-        points="7,23 12.5,16 17.5,19 24.5,9"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeOpacity=".85"
-      />
-      <circle cx="7" cy="23" r="2" fill="#fff" />
-      <circle cx="12.5" cy="16" r="2" fill="#fff" />
-      <circle cx="17.5" cy="19" r="2" fill="#fff" />
-      <circle cx="24.5" cy="9" r="3" fill="#fff" />
+      <rect width="32" height="32" rx="7" fill="var(--logo-tile)" />
+      <rect x="8" y="17" width="4" height="7" rx="1" fill="var(--logo-bar)" />
+      <rect x="14" y="12" width="4" height="12" rx="1" fill="var(--logo-bar)" />
+      <rect x="20" y="8" width="4" height="16" rx="1" fill="var(--logo-bar)" />
     </svg>
   );
 }
