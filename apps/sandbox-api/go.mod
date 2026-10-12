@@ -52,4 +52,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require go.opentelemetry.io/otel/metric v1.26.0 // indirect
+require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
+	go.opentelemetry.io/otel/metric v1.26.0 // indirect
+)
