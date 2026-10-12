@@ -66,6 +66,6 @@ go test ./...
 2. Build and push the arm64 image:
    ```bash
    docker buildx build --platform linux/arm64 \
-     -t us-central1-docker.pkg.dev/home-473419/internal/virgo-bench:v0.1.0 --push apps/virgo-bench
+     -t us-central1-docker.pkg.dev/home-473419/internal/virgo-bench:v0.2.0 --push apps/virgo-bench
    ```
 3. Apply Terraform for the DNS record, tunnel route, Access app and secrets. Argo CD then syncs `helm/virgo-bench`, `helm/namespaces` and `helm/networking`.

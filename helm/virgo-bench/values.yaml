@@ -20,7 +20,7 @@ application-template:
       image:
         repository: us-central1-docker.pkg.dev/home-473419/internal/virgo-bench
         pullPolicy: IfNotPresent
-        tag: "v0.1.0"
+        tag: "v0.2.0"
         port: 8080
       service:
         enabled: true
