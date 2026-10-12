@@ -61,6 +61,29 @@ application-template:
               secretKeyRef:
                 name: virgo-secrets
                 key: webui-admin-password
+          # Pin the backend so it survives pod restarts (the DB is ephemeral).
+          - name: OLLAMA_BASE_URL
+            value: http://virgo.virgo.svc.cluster.local:8000
+          - name: ENABLE_OPENAI_API
+            value: "False"
+          # hailo-ollama models have a ~2k token context and serve one request at a time.
+          # Builtin tools inject ~6k tokens of tool schemas into every UI request, which
+          # makes the NPU return garbage or a 500, so turn them off for all models.
+          - name: DEFAULT_MODEL_METADATA
+            value: '{"capabilities":{"builtin_tools":false}}'
+          # Cap output so a runaway generation can't hold the NPU for minutes.
+          - name: DEFAULT_MODEL_PARAMS
+            value: '{"num_predict":512}'
+          # Background tasks queue ahead of the reply on the single-request NPU
+          # (title generation delayed replies by ~2 minutes).
+          - name: ENABLE_TITLE_GENERATION
+            value: "False"
+          - name: ENABLE_TAGS_GENERATION
+            value: "False"
+          - name: ENABLE_FOLLOW_UP_GENERATION
+            value: "False"
+          - name: ENABLE_AUTOCOMPLETE_GENERATION
+            value: "False"
         volumeMounts:
           - name: gcp-sa-token
             mountPath: /var/run/secrets/workload-identity-federation
