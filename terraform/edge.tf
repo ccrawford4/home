@@ -16,7 +16,6 @@ locals {
     ai     = {}
     chat   = {}
     ci     = {}
-    ollama = {}
     openid = {}
     search = {}
 

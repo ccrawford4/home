@@ -1,0 +1,112 @@
+application-template:
+  name: inference-gateway
+  namespace: inference-gateway
+  clusterSecretStoreName: cluster-secret-store
+  serviceAccount:
+    create: true
+    name: inference-gateway
+
+  configMaps:
+    - name: inference-gateway-config
+      data:
+        config.yaml: |
+          listen: ":8080"
+          queueDepth: 16
+          registrationTTL: 60s
+          backends:
+            - name: hailo
+              url: http://virgo.virgo.svc.cluster.local:8000
+              onPrem: true
+              concurrency: 1 # hailo-ollama serves one generation at a time
+              keepAlive: -1  # avoid the ~10 s model reload after 5 min idle
+          # GPU nodes register themselves at runtime via POST /internal/backends.
+          models:
+            qwen2.5-coder:1.5b: [hailo]
+            qwen2:1.5b: [hailo]
+            qwen2.5-coder:7b: [gpu]
+          tiers:
+            fast: [gpu, hailo]
+            local: [hailo]
+          # Each client's key lives in Secret Manager as
+          # inference-gateway-<client>-key. Private clients only reach onPrem backends.
+          clients:
+            - name: sandbox-agents
+              private: false
+            - name: personal-agent
+              private: true
+
+  deployments:
+    - name: inference-gateway
+      replicaCount: 1 # NPU queue and registrations are in-process; keep one replica
+      image:
+        repository: us-central1-docker.pkg.dev/home-473419/internal/inference-gateway
+        pullPolicy: IfNotPresent
+        tag: "v0.1.0"
+        port: 8080
+      service:
+        enabled: true
+        port: 8080
+      container:
+        env:
+          - name: CONFIG_PATH
+            value: /etc/inference-gateway/config.yaml
+          - name: KEYS_DIR
+            value: /etc/inference-gateway/keys
+          - name: ADMIN_KEY_FILE
+            value: /etc/inference-gateway/admin/key
+        volumeMounts:
+          - name: config
+            mountPath: /etc/inference-gateway/config.yaml
+            subPath: config.yaml
+            readOnly: true
+          - name: client-keys
+            mountPath: /etc/inference-gateway/keys
+            readOnly: true
+          - name: admin-key
+            mountPath: /etc/inference-gateway/admin
+            readOnly: true
+          - name: gcp-sa-token
+            mountPath: /var/run/secrets/workload-identity-federation
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+      volumes:
+        - name: config
+          configMap:
+            name: inference-gateway-config
+        - name: client-keys
+          secret:
+            secretName: inference-gateway-client-keys
+        - name: admin-key
+          secret:
+            secretName: inference-gateway-admin-key
+        - name: gcp-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: "//iam.googleapis.com/projects/631401797177/locations/global/workloadIdentityPools/home-cluster-pool/providers/home-cluster-oidc-provider"
+                  expirationSeconds: 3600
+                  path: token
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+
+  secrets:
+    - name: inference-gateway-client-keys
+      data:
+        - secretKey: sandbox-agents
+          remoteRefKey: inference-gateway-sandbox-agents-key
+        - secretKey: personal-agent
+          remoteRefKey: inference-gateway-personal-agent-key
+    - name: inference-gateway-admin-key
+      data:
+        - secretKey: key
+          remoteRefKey: inference-gateway-admin-key
