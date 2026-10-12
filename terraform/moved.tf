@@ -369,11 +369,6 @@ moved {
 }
 
 moved {
-  from = cloudflare_dns_record.ollama
-  to   = module.public_hostname["ollama"].cloudflare_dns_record.this[0]
-}
-
-moved {
   from = cloudflare_dns_record.atlantis
   to   = module.public_hostname["atlantis"].cloudflare_dns_record.this[0]
 }

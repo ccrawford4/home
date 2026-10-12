@@ -7,8 +7,9 @@ namespaces:
   - name: portfolio
   - name: ai-agent-api
   - name: openid-server
-  - name: ollama
   - name: atlantis
   - name: pipelines
   - name: virgo
   - name: virgo-bench
+  - name: inference-gateway
+  - name: gpu-node

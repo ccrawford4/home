@@ -1,0 +1,10 @@
+apiVersion: v2
+name: inference-gateway
+description: Ollama-compatible gateway that routes inference to the Hailo NPU and GPU nodes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: application-template
+    version: 0.1.0
+    repository: "file://../../helm-library/application-template"

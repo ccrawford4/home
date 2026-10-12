@@ -67,3 +67,21 @@ variable "gar_location" {
   type        = string
   default     = "us-central1"
 }
+
+variable "gpu_zone" {
+  description = "Zone for the on-demand GPU node pool (must offer NVIDIA L4 / g2-standard-4)"
+  type        = string
+  default     = "us-central1-a"
+}
+
+variable "k3s_server_url" {
+  description = "K3s API server URL that GPU nodes join over Tailscale, e.g. https://<pi-tailscale-name-or-ip>:6443. The host must be in the server's tls-san."
+  type        = string
+  default     = "https://home-k3s:6443"
+}
+
+variable "gpu_quota_requests_enabled" {
+  description = "Create Cloud Quotas preferences for the GPU pool (1 preemptible L4 in var.region, 1 GPU globally). Needs the Cloud Quotas API enabled and cloudquotas.admin on the Terraform identity."
+  type        = bool
+  default     = false
+}

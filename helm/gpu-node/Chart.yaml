@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gpu-node
+description: Runtime pieces for on-demand GPU nodes (Ollama, NVIDIA device plugin, gVisor runtime class)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

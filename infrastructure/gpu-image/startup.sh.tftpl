@@ -1,0 +1,111 @@
+#!/bin/bash
+# GCE startup script for GPU pool nodes. Rendered by Terraform
+# (terraform/gpu_pool.tf, templatefile) and run by google-startup-scripts on
+# every boot, so every step is idempotent.
+#
+#   1. Read the K3s node token and Tailscale auth key from Secret Manager.
+#   2. Join the tailnet (skipped when tailscaled is already logged in).
+#   3. Write the K3s agent config with the node's Tailscale IP and start the
+#      k3s-agent unit baked into the image.
+#
+# Template note: Terraform interpolates $${...}; bash variables here are
+# written as $VAR (no braces) so they pass through untouched.
+set -euo pipefail
+
+PROJECT_ID="${project_id}"
+K3S_SERVER_URL="${k3s_server_url}"
+K3S_TOKEN_SECRET="${k3s_token_secret}"
+TAILSCALE_AUTH_SECRET="${tailscale_auth_secret}"
+
+METADATA="http://metadata.google.internal/computeMetadata/v1"
+K3S_CONFIG_DIR=/etc/rancher/k3s
+
+log() { echo "gpu-node-startup: $*"; }
+
+access_token() {
+  curl -sSf --retry 10 --retry-connrefused -H 'Metadata-Flavor: Google' \
+    "$METADATA/instance/service-accounts/default/token" |
+    python3 -c 'import json, sys; print(json.load(sys.stdin)["access_token"])'
+}
+
+# Prints the latest version of a Secret Manager secret.
+read_secret() {
+  local token
+  token="$(access_token)"
+  curl -sSf --retry 10 --retry-connrefused -H "Authorization: Bearer $token" \
+    "https://secretmanager.googleapis.com/v1/projects/$PROJECT_ID/secrets/$1/versions/latest:access" |
+    python3 -c 'import base64, json, sys; sys.stdout.write(base64.b64decode(json.load(sys.stdin)["payload"]["data"]).decode())'
+}
+
+# --- Tailscale -----------------------------------------------------------------
+systemctl enable --now tailscaled
+
+if ! tailscale ip -4 >/dev/null 2>&1; then
+  log "joining the tailnet"
+  # The instance name already starts with "gpu-node-" (MIG base_instance_name).
+  tailscale up \
+    --authkey="$(read_secret "$TAILSCALE_AUTH_SECRET")" \
+    --hostname="$(hostname -s)" \
+    --ssh
+fi
+
+TS_IP=""
+for _ in $(seq 1 60); do
+  TS_IP="$(tailscale ip -4 2>/dev/null | head -n1 || true)"
+  [ -n "$TS_IP" ] && break
+  sleep 2
+done
+if [ -z "$TS_IP" ]; then
+  log "no Tailscale IPv4 address after 120s" >&2
+  exit 1
+fi
+log "tailscale IP $TS_IP"
+
+# --- K3s agent -----------------------------------------------------------------
+install -d -m 0755 "$K3S_CONFIG_DIR"
+
+if [ ! -s "$K3S_CONFIG_DIR/token" ]; then
+  umask 077
+  read_secret "$K3S_TOKEN_SECRET" >"$K3S_CONFIG_DIR/token.tmp"
+  mv "$K3S_CONFIG_DIR/token.tmp" "$K3S_CONFIG_DIR/token"
+  umask 022
+fi
+
+new_config="$(mktemp)"
+cat >"$new_config" <<CONFIG
+# Written by the GCE startup script on every boot; local edits are lost.
+server: "$K3S_SERVER_URL"
+token-file: "$K3S_CONFIG_DIR/token"
+node-name: "$(hostname -s)"
+node-ip: "$TS_IP"
+node-external-ip: "$TS_IP"
+# Pod traffic (flannel VXLAN) runs over the tailnet.
+flannel-iface: tailscale0
+node-label:
+  - accelerator=nvidia-l4
+  - node.kubernetes.io/instance-type=g2-standard-4
+  - gpu-pool/spot=true
+node-taint:
+  - gpu=true:NoSchedule
+kubelet-arg:
+  # Spot preemption gives ~30s notice; let pods shut down cleanly.
+  - shutdown-grace-period=25s
+  - shutdown-grace-period-critical-pods=5s
+CONFIG
+
+if ! cmp -s "$new_config" "$K3S_CONFIG_DIR/config.yaml"; then
+  install -m 0600 "$new_config" "$K3S_CONFIG_DIR/config.yaml"
+  config_changed=1
+else
+  config_changed=0
+fi
+rm -f "$new_config"
+
+systemctl daemon-reload
+systemctl enable k3s-agent
+if [ "$config_changed" = 1 ] && systemctl is-active --quiet k3s-agent; then
+  systemctl restart k3s-agent
+else
+  systemctl start k3s-agent
+fi
+log "k3s-agent started against $K3S_SERVER_URL"

@@ -90,6 +90,13 @@ locals {
       secrets                     = ["db-username", "db-password", "db-root-password"]
       image_pull_service_accounts = ["virgo-bench"]
     }
+
+    inference-gateway = {
+      # One API key per client registered in helm/inference-gateway, plus the
+      # admin key GPU nodes use to register themselves.
+      secrets                     = ["sandbox-agents-key", "personal-agent-key", "admin-key"]
+      image_pull_service_accounts = ["inference-gateway"]
+    }
   }
 }
 

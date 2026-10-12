@@ -1,0 +1,62 @@
+# One Ollama per GPU node. The inference gateway reaches it through the
+# Service below; with no GPU node running the Service has no endpoints and the
+# gateway marks the backend unhealthy and falls back to the Hailo NPU.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ollama
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      containers:
+        - name: ollama
+          image: {{ .Values.ollama.image }}
+          env:
+            - name: OLLAMA_MODELS
+              value: /models
+            - name: OLLAMA_KEEP_ALIVE
+              value: {{ .Values.ollama.keepAlive | quote }}
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+          ports:
+            - name: http
+              containerPort: {{ .Values.ollama.port }}
+          readinessProbe:
+            httpGet:
+              path: /api/version
+              port: http
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      volumes:
+        - name: models
+          hostPath:
+            path: {{ .Values.ollama.modelsHostPath }}
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: ollama
+  ports:
+    - name: http
+      port: {{ .Values.ollama.port }}
+      targetPort: http
