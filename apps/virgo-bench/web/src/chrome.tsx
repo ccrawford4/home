@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 // Keep in sync with the inline script in index.html, which applies the saved
 // theme before first paint.
@@ -66,7 +66,71 @@ export const Icon = {
   trash: icon(<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />),
   x: icon(<path d="M18 6 6 18M6 6l12 12" />),
   chevron: icon(<path d="m9 18 6-6-6-6" />),
+  copy: icon(
+    <>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </>,
+  ),
+  check: icon(<path d="M20 6 9 17l-5-5" />),
 };
+
+// navigator.clipboard needs a secure context (HTTPS or localhost). Over a plain
+// HTTP port-forward fall back to a hidden textarea and execCommand.
+async function writeClipboard(text: string) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  ta.remove();
+  if (!ok) throw new Error("copy failed");
+}
+
+/** Copies `text()` to the clipboard and shows "Copied" for a moment. With
+ *  `compact` it is an icon-only row button, like the delete button. */
+export function CopyButton(props: { text: () => string; label?: string; title: string; compact?: boolean }) {
+  const { text, label = "Copy", title, compact } = props;
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  const timer = useRef<number>();
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const copy = async (e: MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await writeClipboard(text());
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setState("idle"), 2000);
+  };
+
+  const shown = state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : label;
+  return (
+    <button
+      type="button"
+      className={`${compact ? "icon-btn" : "ghost"} copy ${state}`}
+      title={title}
+      aria-label={compact ? title : undefined}
+      onClick={copy}
+    >
+      {state === "copied" ? Icon.check : Icon.copy}
+      {compact ? null : shown}
+      <span className="sr-only" aria-live="polite">
+        {state === "idle" ? "" : shown}
+      </span>
+    </button>
+  );
+}
 
 export function Logo({ size = 24 }: { size?: number }) {
   return (

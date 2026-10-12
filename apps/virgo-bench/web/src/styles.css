@@ -624,6 +624,30 @@ button.icon-btn:focus-visible {
   opacity: 1;
 }
 
+button.icon-btn:not(.danger):hover {
+  color: var(--text);
+  background: var(--subtle);
+}
+
+/* Copy buttons confirm in place: a check and "Copied" in the success color. */
+button.copy.copied,
+button.copy.copied:hover {
+  color: var(--good);
+  opacity: 1;
+}
+
+button.copy.failed {
+  color: var(--bad);
+  opacity: 1;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
 button.icon-btn.danger:hover {
   color: var(--bad);
   background: var(--bad-bg);
@@ -760,6 +784,7 @@ th.sel {
 td.actions {
   width: 1%;
   text-align: right;
+  white-space: nowrap;
   padding-top: 0;
   padding-bottom: 0;
 }

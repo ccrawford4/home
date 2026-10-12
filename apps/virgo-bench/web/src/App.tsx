@@ -1,13 +1,9 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api, BenchRequest, Run, RunConfig } from "./api";
-import { Icon, Logo, ThemeToggle } from "./chrome";
-
-const fmtMs = (v: number | null | undefined) =>
-  v == null ? "–" : v >= 1000 ? `${(v / 1000).toFixed(2)} s` : `${Math.round(v)} ms`;
-const fmtNum = (v: number | null | undefined, digits = 1) =>
-  v == null ? "–" : v.toFixed(digits);
-const fmtDate = (s?: string) => (s ? new Date(s).toLocaleString() : "–");
+import { CopyButton, Icon, Logo, ThemeToggle } from "./chrome";
+import { compareRows, fmtDate, fmtMs, fmtNum, phaseOrder, phaseTitle, recall } from "./format";
+import { compareMd, phaseMd, runMd, runsMd, runSummaryMd } from "./markdown";
 
 function useHashRoute(): [number | null, (id: number | null) => void] {
   const parse = () => {
@@ -319,7 +315,12 @@ function RunsTable(props: {
             Tick two or more finished runs to compare them side by side.
           </p>
         </div>
-        {runs.length > 0 && <span className="count">{runs.length}</span>}
+        {runs.length > 0 && (
+          <div className="head-actions">
+            <CopyButton text={() => runsMd(runs)} title="Copy all runs as a Markdown table" />
+            <span className="count">{runs.length}</span>
+          </div>
+        )}
       </div>
       {runs.length === 0 ? (
         <div className="empty">
@@ -378,10 +379,17 @@ function RunsTable(props: {
                     <td className="num">{fmtMs(s?.warm?.client_ttlt_ms?.p50)}</td>
                     <td className="num">{fmtNum(s?.warm?.decode_tps?.p50)}</td>
                     <td className="num">{fmtMs(s?.cold?.client_ttft_ms)}</td>
-                    <td>{s?.multi_turn ? (s.multi_turn.recall_ok ? "yes" : "no") : "–"}</td>
+                    <td>{recall(r)}</td>
                     <td className="num">{s?.tools ? `${s.tools.passed}/${s.tools.total}` : "–"}</td>
                     <td className="small muted">{fmtDate(r.created_at)}</td>
                     <td className="actions">
+                      {s && (
+                        <CopyButton
+                          compact
+                          text={() => runSummaryMd(r)}
+                          title={`Copy run #${r.id} results as Markdown`}
+                        />
+                      )}
                       {r.status !== "running" && (
                         <button
                           className="icon-btn danger"
@@ -404,32 +412,6 @@ function RunsTable(props: {
   );
 }
 
-type Row = { label: string; get: (r: Run) => number | null | undefined; better?: "low" | "high"; fmt: (v: number | null | undefined) => string };
-
-const compareRows: Row[] = [
-  { label: "TTFT p50 (client)", get: (r) => r.summary?.warm?.client_ttft_ms?.p50, better: "low", fmt: fmtMs },
-  { label: "TTFT p50 (server)", get: (r) => r.summary?.warm?.server_ttft_ms?.p50, better: "low", fmt: fmtMs },
-  { label: "TTLT p50", get: (r) => r.summary?.warm?.client_ttlt_ms?.p50, better: "low", fmt: fmtMs },
-  { label: "Decode tok/s p50", get: (r) => r.summary?.warm?.decode_tps?.p50, better: "high", fmt: (v) => fmtNum(v) },
-  { label: "Output tokens p50", get: (r) => r.summary?.warm?.eval_count?.p50, fmt: (v) => fmtNum(v, 0) },
-  { label: "Cold TTFT", get: (r) => r.summary?.cold?.client_ttft_ms, better: "low", fmt: fmtMs },
-  { label: "Load penalty", get: (r) => r.summary?.cold?.load_penalty_ms, better: "low", fmt: fmtMs },
-  { label: "Multi-turn total", get: (r) => r.summary?.multi_turn?.total_ms, better: "low", fmt: fmtMs },
-  {
-    label: "Turn 4 TTFT",
-    get: (r) => r.summary?.multi_turn?.turns?.[3]?.client_ttft_ms,
-    better: "low",
-    fmt: fmtMs,
-  },
-  {
-    label: "Tool pass rate",
-    get: (r) => (r.summary?.tools ? r.summary.tools.pass_rate * 100 : null),
-    better: "high",
-    fmt: (v) => (v == null ? "–" : `${Math.round(v)}%`),
-  },
-  { label: "Tool latency p50", get: (r) => r.summary?.tools?.latency_ms?.p50, better: "low", fmt: fmtMs },
-];
-
 function Compare({ runs, onClear }: { runs: Run[]; onClear: () => void }) {
   const mismatched = new Set(runs.map((r) => r.config.num_predict)).size > 1;
   return (
@@ -439,10 +421,13 @@ function Compare({ runs, onClear }: { runs: Run[]; onClear: () => void }) {
           <h2>Compare</h2>
           <p className="muted small">Best value in each row is highlighted.</p>
         </div>
-        <button className="ghost" onClick={onClear}>
-          {Icon.x}
-          Clear
-        </button>
+        <div className="head-actions">
+          <CopyButton text={() => compareMd(runs)} title="Copy this comparison as a Markdown table" />
+          <button className="ghost" onClick={onClear}>
+            {Icon.x}
+            Clear
+          </button>
+        </div>
       </div>
       {mismatched && (
         <p className="banner warn small">
@@ -488,7 +473,7 @@ function Compare({ runs, onClear }: { runs: Run[]; onClear: () => void }) {
               <td className="metric">History recall</td>
               {runs.map((r) => (
                 <td key={r.id} className="num">
-                  {r.summary?.multi_turn ? (r.summary.multi_turn.recall_ok ? "yes" : "no") : "–"}
+                  {recall(r)}
                 </td>
               ))}
             </tr>
@@ -550,10 +535,17 @@ function RunDetail({ id, onBack, live }: { id: number; onBack: () => void; live:
             tokens · started {fmtDate(run.started_at)} · finished {fmtDate(run.finished_at)}
           </p>
         </div>
-        <button className="ghost" onClick={onBack}>
-          {Icon.back}
-          All runs
-        </button>
+        <div className="head-actions">
+          <CopyButton
+            text={() => runMd(run, data.requests)}
+            label="Copy results"
+            title="Copy this run's summary and every phase as Markdown tables"
+          />
+          <button className="ghost" onClick={onBack}>
+            {Icon.back}
+            All runs
+          </button>
+        </div>
       </div>
       {run.error && <p className="banner error small">{run.error}</p>}
       {s?.cold?.error && <p className="banner warn small">Cold start: {s.cold.error}</p>}
@@ -582,13 +574,19 @@ function RunDetail({ id, onBack, live }: { id: number; onBack: () => void; live:
           />
         </div>
       )}
-      {["cold", "warmup", "warm", "multiturn", "tools"]
+      {phaseOrder
         .filter((p) => phases[p])
         .map((p) => (
           <section className="card flush" key={p}>
             <div className="card-head">
               <h3>{phaseTitle[p]}</h3>
-              <span className="count">{phases[p].length}</span>
+              <div className="head-actions">
+                <CopyButton
+                  text={() => phaseMd(p, phases[p])}
+                  title={`Copy ${phaseTitle[p].toLowerCase()} as a Markdown table`}
+                />
+                <span className="count">{phases[p].length}</span>
+              </div>
             </div>
             <div className="scroll">
               <table>
@@ -653,11 +651,3 @@ function RunDetail({ id, onBack, live }: { id: number; onBack: () => void; live:
     </>
   );
 }
-
-const phaseTitle: Record<string, string> = {
-  cold: "Cold start (model unloaded first)",
-  warmup: "Warm-up (not counted)",
-  warm: "Warm runs",
-  multiturn: "Multi-turn conversation",
-  tools: "Tool calling (stream: false)",
-};

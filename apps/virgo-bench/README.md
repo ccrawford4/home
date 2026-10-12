@@ -4,6 +4,10 @@ Benchmark suite for the models served by virgo (hailo-ollama on the Hailo NPU).
 Pick a model in the UI, run the suite, and compare runs side by side. Results
 are stored in MySQL.
 
+Every results table has a Copy button that puts it on the clipboard as a
+Markdown table, ready to paste into a chat or an issue. On a run's page, Copy
+results copies the summary and every phase at once.
+
 - **UI and API:** `https://bench.calum.sh`, behind Cloudflare Access (admins only)
 - **Target:** `http://virgo.virgo.svc.cluster.local:8000`, called from inside the cluster so the timings leave out Cloudflare
 
