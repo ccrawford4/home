@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"sandbox-api/api"
+	"sandbox-api/gpupool"
 	"sandbox-api/internal/logger"
 	"sandbox-api/internal/tracing"
 	"sandbox-api/k8s"
@@ -39,10 +40,14 @@ func main() {
 		}
 	}()
 
+	// KUBERNETES_SERVICE_HOST is set in every pod, so its presence means
+	// we are running in the cluster.
+	inCluster := os.Getenv("KUBERNETES_SERVICE_HOST") != ""
+
 	mgr, err := sandbox.NewManager(&sandbox.ManagerConfig{
 		Logger: log,
 		KubeConfig: &k8s.KubeClientConfig{
-			InCluster: false,
+			InCluster: inCluster,
 		},
 	})
 
@@ -57,6 +62,18 @@ func main() {
 		fmt.Fprintln(w, "ok")
 	})
 	h.RegisterRoutes(mux)
+
+	gpuPool, err := startGPUPool(ctx, log, inCluster)
+	if err != nil {
+		log.Error("failed to start gpu pool scaler", "error", err)
+		os.Exit(1)
+	}
+	// A nil *Controller inside the interface would not compare equal to nil.
+	var pool api.GPUPool
+	if gpuPool != nil {
+		pool = gpuPool
+	}
+	h.RegisterGPUPoolRoutes(mux, pool)
 
 	srv := &http.Server{
 		Addr:    ":8080",
@@ -85,4 +102,33 @@ func main() {
 		log.Error("server error", "error", err)
 		os.Exit(1)
 	}
+}
+
+// startGPUPool starts the GPU pool scaler when GPU_POOL_ENABLED is set. It
+// returns nil when the scaler is disabled.
+func startGPUPool(ctx context.Context, log *slog.Logger, inCluster bool) (*gpupool.Controller, error) {
+	cfg, err := gpupool.ConfigFromEnv()
+	if err != nil {
+		return nil, err
+	}
+	if !cfg.Enabled {
+		log.Info("gpu pool scaler disabled")
+		return nil, nil
+	}
+
+	clientset, err := k8s.NewClientset(inCluster)
+	if err != nil {
+		return nil, fmt.Errorf("creating kubernetes client: %w", err)
+	}
+
+	var mig gpupool.MIG
+	if cfg.DryRun {
+		mig = gpupool.NewDryRunMIG(log)
+	} else if mig, err = gpupool.NewGCEMIG(ctx, cfg); err != nil {
+		return nil, err
+	}
+
+	c := gpupool.NewController(cfg, mig, gpupool.NewKubeCluster(clientset, cfg, log), log)
+	go c.Run(ctx)
+	return c, nil
 }

@@ -28,19 +28,29 @@ func getClusterConfig(inCluster bool) (*rest.Config, error) {
 	}
 }
 
+// NewClientset returns a Kubernetes clientset for the in-cluster or local
+// kubeconfig configuration.
+func NewClientset(inCluster bool) (kubernetes.Interface, error) {
+	clusterConfig, err := getClusterConfig(inCluster)
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(clusterConfig)
+}
+
 // Creates a new KubeClient based on the provided KubeClientConfig.
 func NewKubeClient(clientConfig *KubeClientConfig) (*KubeClient, error) {
 	// Get the cluster configuration based on the clientConfig
 	clusterConfig, err := getClusterConfig(clientConfig.InCluster)
 	if err != nil {
-		log.Error("Failed to get cluster configuration", err)
+		log.Error("Failed to get cluster configuration", "error", err)
 		return nil, err
 	}
 
 	// Create the Kubernetes clientset
 	clientset, err := kubernetes.NewForConfig(clusterConfig)
 	if err != nil {
-		log.Error("Failed to create Kubernetes clientset", err)
+		log.Error("Failed to create Kubernetes clientset", "error", err)
 	}
 
 	// Return the KubeClient instance
@@ -56,7 +66,7 @@ func (kc *KubeClient) CreateJob(jobConfig *JobLaunchConfig) (*batchv1.Job, error
 
 	response, err := jobs.Create(context.Background(), jobObject, metav1.CreateOptions{})
 	if err != nil {
-		log.Error("Failed to create job", err)
+		log.Error("Failed to create job", "error", err)
 		return nil, err
 	}
 
